@@ -1,6 +1,8 @@
 # calibre-invoker
 
-[![Java](https://img.shields.io/badge/Java-8-orange)] [![License](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
+[English](./README.md) | [简体中文](./README.zh-CN.md)
+
+[![License](https://img.shields.io/badge/license-Apache%202.0-green)
 
 > 以编程方式调用 [Calibre](https://calibre-ebook.com) 命令行工具的 Java 封装
 > （ebook-convert、ebook-edit、ebook-polish、ebook-viewer、ebook-meta、
@@ -19,8 +21,6 @@
 - [9. 测试与构建](#9-测试与构建)
 - [10. 版本与分支](#10-版本与分支)
 - [11. 贡献与许可](#11-贡献与许可)
-
-[English](./README.md) | [简体中文](./README.zh-CN.md)
 
 ## 1. 项目概述
 
