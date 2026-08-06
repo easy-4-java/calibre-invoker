@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, hiwepy (https://github.com/hiwepy).
+ * Copyright (c) 2018, Loong Wan (https://github.com/loong10k).
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ package io.github.easy4j.calibre.invoker.request;
  * Launch the calibre edit book tool. You can optionally also specify the names 
  * of files inside the book which will be opened for editing automatically.</p>
  * https://manual.calibre-ebook.com/generated/en/ebook-edit.html
- * @author 		： <a href="https://github.com/hiwepy">hiwepy</a>
+ * @author [@Loong Wan](https://github.com/loong10k)
  */
 public class DefaultEbookEditInvocationRequest extends AbstractInvocationRequest implements InvocationRequest  {
 	
