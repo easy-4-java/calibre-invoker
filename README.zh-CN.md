@@ -2,7 +2,7 @@
 
 [English](./README.md) | [简体中文](./README.zh-CN.md)
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-green)
+[![Java](https://img.shields.io/badge/Java-8-orange)] [![License](https://img.shields.io/badge/license-Apache%202.0-green)](./LICENSE)
 
 > 以编程方式调用 [Calibre](https://calibre-ebook.com) 命令行工具的 Java 封装
 > （ebook-convert、ebook-edit、ebook-polish、ebook-viewer、ebook-meta、
