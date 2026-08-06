@@ -1,6 +1,8 @@
 # calibre-invoker
 
-[![Java](https://img.shields.io/badge/Java-17-orange)] [![License](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
+[English](./README.md) | [简体中文](./README.zh-CN.md)
+
+[![License](https://img.shields.io/badge/license-Apache%202.0-green)
 
 > A Java wrapper that programmatically invokes the [Calibre](https://calibre-ebook.com)
 > command line tool (ebook-convert, ebook-edit, ebook-polish, ebook-viewer, ebook-meta,
