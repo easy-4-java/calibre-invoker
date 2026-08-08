@@ -18,12 +18,15 @@ package io.github.easy4j.calibre.invoker.exception;
 import io.github.easy4j.calibre.invoker.InvocationResult;
 
 /**
- * Signals an error during the construction of the command line used to invoke Maven, e.g. illegal invocation arguments.
- * This should not be confused with a failure of the invoked Maven build itself which will be reported by means of a
- * non-zero exit code.
- * 
+ * Signals an error during the construction or execution of the command line used to invoke Calibre,
+ * e.g. illegal invocation arguments or command-line configuration errors. This should not be confused
+ * with a failure of the invoked Calibre process itself which will be reported by means of a
+ * non-zero exit code via {@link InvocationResult#getExitCode()}.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
  * @see InvocationResult#getExitCode()
- * @version $Id: MavenInvocationException.java 662043 2008-05-31 16:27:02Z bentmann $
+ * @see io.github.easy4j.calibre.invoker.Invoker#execute(io.github.easy4j.calibre.invoker.request.InvocationRequest)
  */
 public class CalibreInvocationException
     extends Exception

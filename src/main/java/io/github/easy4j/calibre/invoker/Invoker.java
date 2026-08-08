@@ -21,7 +21,15 @@ import io.github.easy4j.calibre.invoker.exception.CalibreInvocationException;
 import io.github.easy4j.calibre.invoker.request.InvocationRequest;
 
 /**
- * Provides a facade to invoke Calibre.
+ * Provides a facade to invoke Calibre. This is the main entry point for programmatically
+ * executing Calibre commands. Implementations manage the lifecycle of a forked Calibre
+ * process including environment setup, command-line construction, and result collection.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see DefaultInvoker
+ * @see io.github.easy4j.calibre.invoker.request.InvocationRequest
+ * @see InvocationResult
  */
 public interface Invoker {
 

@@ -31,10 +31,20 @@ public class DefaultEbookEditInvocationRequest extends AbstractInvocationRequest
 	 */
 	private boolean detach;
 
+	/**
+	 * Returns whether the process should detach from the controlling terminal (Linux only).
+	 *
+	 * @return {@code true} if the process should detach, {@code false} otherwise.
+	 */
 	public boolean isDetach() {
 		return detach;
 	}
 
+	/**
+	 * Sets whether the process should detach from the controlling terminal (Linux only).
+	 *
+	 * @param detach {@code true} to detach, {@code false} otherwise.
+	 */
 	public void setDetach(boolean detach) {
 		this.detach = detach;
 	}

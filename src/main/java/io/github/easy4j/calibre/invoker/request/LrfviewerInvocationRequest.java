@@ -17,17 +17,52 @@ package io.github.easy4j.calibre.invoker.request;
 
 import java.io.File;
 
+/**
+ * Specifies the parameters used to control a Calibre {@code lrfviewer} invocation. Views
+ * LRF e-books with configurable rendering options including hyphenation, profiling,
+ * visual debugging, and background color.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see InvocationRequest
+ * @see io.github.easy4j.calibre.invoker.command.LrfviewerCommandLineBuilder
+ */
 public interface LrfviewerInvocationRequest extends InvocationRequest {
 	
+	/**
+	 * Returns whether hyphenation should be disabled for faster rendering.
+	 *
+	 * @return {@code true} if hyphenation is disabled, {@code false} otherwise.
+	 */
 	public boolean isDisableHyphenation();
-	
-	public boolean isProfile() ;
 
+	/**
+	 * Returns whether the LRF renderer should be profiled.
+	 *
+	 * @return {@code true} if profiling is enabled, {@code false} otherwise.
+	 */
+	public boolean isProfile();
+
+	/**
+	 * Returns the LRS file to view.
+	 *
+	 * @return The LRS file path.
+	 */
 	public File getLrsFile();
-	
+
+	/**
+	 * Returns whether visual debugging aids for the rendering engine are enabled.
+	 *
+	 * @return {@code true} if visual debug is enabled, {@code false} otherwise.
+	 */
 	public boolean isVisualDebug();
 
-	public boolean isWhiteBackground() ;
+	/**
+	 * Returns whether the background should be pure white instead of off-white.
+	 *
+	 * @return {@code true} if white background is enabled, {@code false} otherwise.
+	 */
+	public boolean isWhiteBackground();
 	
 	/**
 	 * Set the value of the {@code disable-hyphenation} {@code true} if the

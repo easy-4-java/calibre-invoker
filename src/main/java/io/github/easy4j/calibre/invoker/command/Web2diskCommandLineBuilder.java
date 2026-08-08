@@ -27,6 +27,14 @@ import io.github.easy4j.calibre.invoker.request.InvocationRequest;
 import io.github.easy4j.calibre.invoker.request.Web2diskInvocationRequest;
 
 /**
+ * Command-line builder for the Calibre {@code web2disk} tool. Constructs a command line
+ * to download web pages to disk with configurable options such as base directory, delay,
+ * encoding, filtering, recursion depth, and timeout.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see AbstractCommandLineBuilder
+ * @see io.github.easy4j.calibre.invoker.request.Web2diskInvocationRequest
  */
 public class Web2diskCommandLineBuilder extends AbstractCommandLineBuilder {
 

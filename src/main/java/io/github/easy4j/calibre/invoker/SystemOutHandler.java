@@ -16,7 +16,13 @@
 package io.github.easy4j.calibre.invoker;
 
 /**
- * Offers an output handler that writes to {@link System#out}.
+ * An {@link InvocationOutputHandler} that writes output lines directly to {@link System#out}.
+ * A convenience subclass of {@link PrintStreamHandler} pre-configured for standard output.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see PrintStreamHandler
+ * @see InvocationOutputHandler
  */
 public class SystemOutHandler extends PrintStreamHandler {
 
