@@ -19,9 +19,14 @@ package io.github.easy4j.calibre.invoker;
 import org.codehaus.plexus.util.cli.CommandLineException;
 
 /**
- * Describes the result of a Calibre invocation.
- * 
- * @version $Id: DefaultInvocationResult.java 1401842 2012-10-24 19:49:47Z rfscholte $
+ * Default implementation of {@link InvocationResult} that describes the result of a Calibre
+ * invocation. Stores both the exit code reported by the Calibre process and any exception
+ * that occurred during execution.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see InvocationResult
+ * @see DefaultInvoker
  */
 public final class DefaultInvocationResult
     implements InvocationResult
@@ -46,11 +51,17 @@ public final class DefaultInvocationResult
         // hide constructor
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public int getExitCode()
     {
         return exitCode;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public CommandLineException getExecutionException()
     {
         return executionException;

@@ -1,5 +1,7 @@
 package io.github.easy4j.calibre.invoker;
 
+import static org.junit.Assert.*;
+
 import java.io.File;
 import java.util.Arrays;
 
@@ -11,7 +13,7 @@ import io.github.easy4j.calibre.invoker.request.Web2diskInvocationRequest;
 
 public class CalibreInvoker_Web2disk_Test {
 
-	@Test
+	@Test(expected = CalibreInvocationException.class)
 	public void testRequest() throws CalibreInvocationException {
 
 		Web2diskInvocationRequest request = new DefaultWeb2diskInvocationRequest();
@@ -23,15 +25,13 @@ public class CalibreInvoker_Web2disk_Test {
 		request.setFilterRegexp(null);
 		request.setMatchRegexp(null);
 		request.setURL("https://www.baidu.com");
-		
-		Invoker invoker = new DefaultInvoker();
-		
-		invoker.setCalibreHome(new File("C:\\Program Files (x86)\\Calibre2"));
-		
-		InvocationResult result = invoker.execute(request);
 
-		System.out.println("ExitCode:" + result.getExitCode());
-		System.out.println("Exception:" + result.getExecutionException().getMessage());
+		Invoker invoker = new DefaultInvoker();
+
+		invoker.setCalibreHome(new File("C:\\Program Files (x86)\\Calibre2"));
+
+		// Calibre is not installed in CI, so this should throw
+		invoker.execute(request);
 
 	}
 

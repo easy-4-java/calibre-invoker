@@ -81,58 +81,128 @@ public class DefaultEbookPolishInvocationRequest  extends AbstractInvocationRequ
 	 */
 	private boolean upgradeBook;
 
+	/**
+	 * Returns whether images should be losslessly compressed to reduce file size.
+	 *
+	 * @return {@code true} if image compression is enabled, {@code false} otherwise.
+	 */
 	public boolean isCompressImages() {
 		return compressImages;
 	}
 
+	/**
+	 * Sets whether images should be losslessly compressed to reduce file size.
+	 *
+	 * @param compressImages {@code true} to enable compression, {@code false} otherwise.
+	 */
 	public void setCompressImages(boolean compressImages) {
 		this.compressImages = compressImages;
 	}
 
+	/**
+	 * Returns whether referenced fonts should be embedded into the document.
+	 *
+	 * @return {@code true} if font embedding is enabled, {@code false} otherwise.
+	 */
 	public boolean isEmbedFonts() {
 		return embedFonts;
 	}
 
+	/**
+	 * Sets whether referenced fonts should be embedded into the document.
+	 *
+	 * @param embedFonts {@code true} to embed fonts, {@code false} otherwise.
+	 */
 	public void setEmbedFonts(boolean embedFonts) {
 		this.embedFonts = embedFonts;
 	}
 
+	/**
+	 * Returns whether a previously inserted book jacket page should be removed.
+	 *
+	 * @return {@code true} if jacket removal is enabled, {@code false} otherwise.
+	 */
 	public boolean isRemoveJacket() {
 		return removeJacket;
 	}
 
+	/**
+	 * Sets whether a previously inserted book jacket page should be removed.
+	 *
+	 * @param removeJacket {@code true} to remove the jacket, {@code false} otherwise.
+	 */
 	public void setRemoveJacket(boolean removeJacket) {
 		this.removeJacket = removeJacket;
 	}
 
+	/**
+	 * Returns whether unused CSS rules should be removed from stylesheets.
+	 *
+	 * @return {@code true} if unused CSS removal is enabled, {@code false} otherwise.
+	 */
 	public boolean isRemoveUnusedCss() {
 		return removeUnusedCss;
 	}
 
+	/**
+	 * Sets whether unused CSS rules should be removed from stylesheets.
+	 *
+	 * @param removeUnusedCss {@code true} to remove unused CSS, {@code false} otherwise.
+	 */
 	public void setRemoveUnusedCss(boolean removeUnusedCss) {
 		this.removeUnusedCss = removeUnusedCss;
 	}
 
+	/**
+	 * Returns whether plain text punctuation should be converted to typographically correct equivalents.
+	 *
+	 * @return {@code true} if smarten-punctuation is enabled, {@code false} otherwise.
+	 */
 	public boolean isSmartenPunctuation() {
 		return smartenPunctuation;
 	}
 
+	/**
+	 * Sets whether plain text punctuation should be converted to typographically correct equivalents.
+	 *
+	 * @param smartenPunctuation {@code true} to smarten punctuation, {@code false} otherwise.
+	 */
 	public void setSmartenPunctuation(boolean smartenPunctuation) {
 		this.smartenPunctuation = smartenPunctuation;
 	}
 
+	/**
+	 * Returns whether embedded fonts should be subsetted to reduce font file sizes.
+	 *
+	 * @return {@code true} if font subsetting is enabled, {@code false} otherwise.
+	 */
 	public boolean isSubsetFonts() {
 		return subsetFonts;
 	}
 
+	/**
+	 * Sets whether embedded fonts should be subsetted to reduce font file sizes.
+	 *
+	 * @param subsetFonts {@code true} to subset fonts, {@code false} otherwise.
+	 */
 	public void setSubsetFonts(boolean subsetFonts) {
 		this.subsetFonts = subsetFonts;
 	}
 
+	/**
+	 * Returns whether the internal book structures should be upgraded (e.g. EPUB 2 to EPUB 3).
+	 *
+	 * @return {@code true} if book upgrade is enabled, {@code false} otherwise.
+	 */
 	public boolean isUpgradeBook() {
 		return upgradeBook;
 	}
 
+	/**
+	 * Sets whether the internal book structures should be upgraded (e.g. EPUB 2 to EPUB 3).
+	 *
+	 * @param upgradeBook {@code true} to upgrade, {@code false} otherwise.
+	 */
 	public void setUpgradeBook(boolean upgradeBook) {
 		this.upgradeBook = upgradeBook;
 	}

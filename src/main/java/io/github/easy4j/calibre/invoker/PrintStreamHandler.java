@@ -18,7 +18,14 @@ package io.github.easy4j.calibre.invoker;
 import java.io.PrintStream;
 
 /**
- * Offers an output handler that writes to a print stream like {@link System#out}.
+ * An {@link InvocationOutputHandler} implementation that writes output lines to a
+ * {@link PrintStream}. Optionally flushes the stream after each line to ensure
+ * timely output delivery.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see InvocationOutputHandler
+ * @see SystemOutHandler
  */
 public class PrintStreamHandler implements InvocationOutputHandler {
 
@@ -52,6 +59,12 @@ public class PrintStreamHandler implements InvocationOutputHandler {
 		this.alwaysFlush = alwaysFlush;
 	}
 
+	/**
+	 * Consumes a single line of output. If the line is {@code null}, an empty line is printed.
+	 * If {@code alwaysFlush} is enabled, the stream is flushed after each line.
+	 *
+	 * @param line The output line to consume, may be {@code null}.
+	 */
 	public void consumeLine(String line) {
 		if (line == null) {
 			out.println();

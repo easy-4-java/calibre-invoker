@@ -32,6 +32,17 @@ import io.github.easy4j.calibre.invoker.SystemOutLogger;
 import io.github.easy4j.calibre.invoker.exception.CommandLineConfigurationException;
 import io.github.easy4j.calibre.invoker.request.InvocationRequest;
 
+/**
+ * Abstract base class for building Calibre command-line invocations. Provides common
+ * infrastructure for locating the Calibre executable, setting up shell environments,
+ * configuring properties, goals, and verbose mode. Subclasses implement
+ * tool-specific command-line construction.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see Web2diskCommandLineBuilder
+ * @see io.github.easy4j.calibre.invoker.request.InvocationRequest
+ */
 public abstract class AbstractCommandLineBuilder {
 	
 	private static final InvokerLogger DEFAULT_LOGGER = new SystemOutLogger();
@@ -48,6 +59,17 @@ public abstract class AbstractCommandLineBuilder {
 
 	protected Properties systemEnvVars;
 
+	/**
+	 * Builds a {@link Commandline} for the given invocation request. This method orchestrates
+	 * the full command-line construction process including state validation, executable lookup,
+	 * shell environment setup, tool-specific configuration, property injection, goal setting,
+	 * and verbose flag configuration.
+	 *
+	 * @param request The invocation request to build a command line for, must not be {@code null}.
+	 * @return The constructed command line, never {@code null}.
+	 * @throws CommandLineConfigurationException If the command line cannot be constructed due to
+	 *         configuration errors or missing executables.
+	 */
 	public Commandline build(InvocationRequest request) throws CommandLineConfigurationException {
 		
 		try {
@@ -81,17 +103,48 @@ public abstract class AbstractCommandLineBuilder {
 		return cli;
 	}
 	
+	/**
+	 * Performs tool-specific command-line argument configuration. Subclasses implement this
+	 * to add arguments specific to the Calibre tool being invoked.
+	 *
+	 * @param request The invocation request containing tool-specific parameters.
+	 * @param cli The command line to configure.
+	 * @throws CommandLineConfigurationException If the command line cannot be configured.
+	 */
 	protected abstract void doCommandInternal(InvocationRequest request,Commandline cli) throws CommandLineConfigurationException;
-	
+
+	/**
+	 * Locates the Calibre executable for this specific tool. Subclasses implement this
+	 * to find the correct executable based on the operating system and Calibre home directory.
+	 *
+	 * @return The resolved executable file, never {@code null}.
+	 * @throws CommandLineConfigurationException If the executable cannot be found.
+	 * @throws IOException If an I/O error occurs while resolving the executable.
+	 */
 	protected abstract File findCalibreExecutable() throws CommandLineConfigurationException, IOException;
 	
 	
+	/**
+	 * Validates that the builder is in a valid state for command-line construction.
+	 *
+	 * @throws IOException If an I/O error occurs during validation.
+	 * @throws IllegalStateException If a required field (e.g. logger) is not set.
+	 */
 	protected void checkRequiredState() throws IOException {
 		if (logger == null) {
 			throw new IllegalStateException("A logger instance is required.");
 		}
 	}
  
+	/**
+	 * Configures the shell environment variables for the command line. Inherits system
+	 * environment variables if requested, sets the {@code CALIBRE_HOME} variable if specified,
+	 * and adds any custom shell environment variables from the request.
+	 *
+	 * @param request The invocation request containing environment configuration.
+	 * @param cli The command line to configure.
+	 * @throws CommandLineConfigurationException If environment variables cannot be read.
+	 */
 	protected void setShellEnvironment(InvocationRequest request, Commandline cli)
 			throws CommandLineConfigurationException {
 		if (request.isShellEnvironmentInherited()) {
@@ -123,6 +176,12 @@ public abstract class AbstractCommandLineBuilder {
 		
 	}
 
+	/**
+	 * Adds goal arguments to the command line from the request.
+	 *
+	 * @param request The invocation request containing goals.
+	 * @param cli The command line to configure.
+	 */
 	protected void setGoals(InvocationRequest request, Commandline cli) {
 		List<String> goals = request.getGoals();
 		if ((goals != null) && !goals.isEmpty()) {
@@ -130,6 +189,12 @@ public abstract class AbstractCommandLineBuilder {
 		}
 	}
 
+	/**
+	 * Adds system properties as {@code -Dkey=value} arguments to the command line.
+	 *
+	 * @param request The invocation request containing system properties.
+	 * @param cli The command line to configure.
+	 */
 	protected void setProperties(InvocationRequest request, Commandline cli) {
 		Properties properties = request.getProperties();
 
@@ -146,6 +211,14 @@ public abstract class AbstractCommandLineBuilder {
 		}
 	}
 
+	/**
+	 * Locates the Calibre home directory by checking the {@code calibre.home} system property
+	 * and the {@code CALIBRE_HOME} environment variable, in that order.
+	 *
+	 * @return The resolved Calibre home directory, or {@code null} if not found.
+	 * @throws CommandLineConfigurationException If the configured home is not a valid directory.
+	 * @throws IOException If an I/O error occurs while reading environment variables.
+	 */
 	protected File findCalibreHome() throws CommandLineConfigurationException, IOException {
 		if (calibreHome == null) {
 			String calibreHomeProperty = System.getProperty("calibre.home");
@@ -164,6 +237,12 @@ public abstract class AbstractCommandLineBuilder {
 		return calibreHome;
 	}
 	 
+	/**
+	 * Adds the {@code --verbose} flag to the command line if verbose mode is enabled in the request.
+	 *
+	 * @param request The invocation request to check for verbose flag.
+	 * @param cli The command line to configure.
+	 */
 	protected void setVerbose(InvocationRequest request, Commandline cli) {
 		if(request.isVerbose()) {
 			cli.createArg().setValue("--verbose");

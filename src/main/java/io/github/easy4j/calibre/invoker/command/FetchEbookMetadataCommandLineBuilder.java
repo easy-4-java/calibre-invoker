@@ -28,7 +28,14 @@ import io.github.easy4j.calibre.invoker.request.FetchEbookMetadataInvocationRequ
 import io.github.easy4j.calibre.invoker.request.InvocationRequest;
 
 /**
- * Fetch book metadata from online sources. You must specify at least one of title, authors or ISBN.
+ * Command-line builder for the Calibre {@code fetch-ebook-metadata} tool. Constructs a command
+ * line to fetch book metadata from online sources. At least one of title, authors, or ISBN
+ * must be specified.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see AbstractCommandLineBuilder
+ * @see io.github.easy4j.calibre.invoker.request.FetchEbookMetadataInvocationRequest
  */
 public class FetchEbookMetadataCommandLineBuilder extends AbstractCommandLineBuilder {
 

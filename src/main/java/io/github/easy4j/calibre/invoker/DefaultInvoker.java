@@ -29,8 +29,31 @@ import io.github.easy4j.calibre.invoker.request.InvocationRequest;
 import io.github.easy4j.calibre.invoker.request.Web2diskInvocationRequest;
 
 /**
- * Class intended to be used by clients who wish to invoke a forked Calibre
- * process from their applications
+ * Default implementation of {@link Invoker} intended to be used by clients who wish to invoke
+ * a forked Calibre process from their applications. Manages the full lifecycle of a Calibre
+ * invocation including environment configuration, command-line construction, process execution,
+ * and result collection.
+ *
+ * <p>Usage example:</p>
+ * <pre>{@code
+ *     DefaultInvoker invoker = new DefaultInvoker();
+ *     invoker.setCalibreHome(new File("/path/to/calibre"));
+ *     invoker.setWorkingDirectory(new File("/path/to/work"));
+ *
+ *     Web2diskInvocationRequest request = new DefaultWeb2diskInvocationRequest();
+ *     request.setURL("https://example.com");
+ *
+ *     InvocationResult result = invoker.execute(request);
+ *     if (result.getExitCode() != 0) {
+ *         // handle error
+ *     }
+ * }</pre>
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see Invoker
+ * @see InvocationResult
+ * @see io.github.easy4j.calibre.invoker.request.InvocationRequest
  */
 public class DefaultInvoker implements Invoker {
 
@@ -52,6 +75,13 @@ public class DefaultInvoker implements Invoker {
 
 	private InvocationOutputHandler errorHandler = DEFAULT_OUTPUT_HANDLER;
 	
+	/**
+	 * Returns the appropriate command-line builder for the given invocation request type.
+	 *
+	 * @param request The invocation request to build a command line for, must not be {@code null}.
+	 * @return The command-line builder for the request type, or {@code null} if no builder
+	 *         is available for the request type.
+	 */
 	protected AbstractCommandLineBuilder getCommandLineBuilder(InvocationRequest request) {
 		if(request instanceof Web2diskInvocationRequest) {
 			return new Web2diskCommandLineBuilder();
@@ -59,6 +89,9 @@ public class DefaultInvoker implements Invoker {
 		return null;
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 */
 	public InvocationResult execute(InvocationRequest request) throws CalibreInvocationException {
 		
 		AbstractCommandLineBuilder cliBuilder = getCommandLineBuilder(request);
@@ -117,10 +150,16 @@ public class DefaultInvoker implements Invoker {
 		return result;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public InvokerLogger getLogger() {
 		return logger;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public Invoker setLogger(InvokerLogger logger) {
 		this.logger = (logger != null) ? logger : DEFAULT_LOGGER;
 		return this;
@@ -137,29 +176,47 @@ public class DefaultInvoker implements Invoker {
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public File getWorkingDirectory() {
 		return workingDirectory;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public Invoker setWorkingDirectory(File workingDirectory) {
 		this.workingDirectory = workingDirectory;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public File getCalibreHome() {
 		return calibreHome;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public Invoker setCalibreHome(File calibreHome) {
 		this.calibreHome = calibreHome;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public Invoker setErrorHandler(InvocationOutputHandler errorHandler) {
 		this.errorHandler = errorHandler;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public Invoker setOutputHandler(InvocationOutputHandler outputHandler) {
 		this.outputHandler = outputHandler;
 		return this;

@@ -18,7 +18,15 @@ package io.github.easy4j.calibre.invoker;
 import org.codehaus.plexus.util.cli.StreamConsumer;
 
 /**
- * Receives the standard/error output from a Calibre invocation.
+ * Receives the standard/error output from a Calibre invocation. Implementations of this interface
+ * are used to capture and process output lines produced by a forked Calibre process.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see Invoker#setOutputHandler(InvocationOutputHandler)
+ * @see Invoker#setErrorHandler(InvocationOutputHandler)
+ * @see PrintStreamHandler
+ * @see SystemOutHandler
  */
 public interface InvocationOutputHandler extends StreamConsumer {
 	// empty by design
