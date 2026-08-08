@@ -17,20 +17,64 @@ package io.github.easy4j.calibre.invoker.request;
 
 import java.io.File;
 
+/**
+ * Specifies the parameters used to control a Calibre {@code fetch-ebook-metadata} invocation.
+ * Fetches book metadata from online sources using at least one of title, authors, or ISBN.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see InvocationRequest
+ * @see io.github.easy4j.calibre.invoker.command.FetchEbookMetadataCommandLineBuilder
+ */
 public interface FetchEbookMetadataInvocationRequest extends InvocationRequest {
 
+	/**
+	 * Returns the cover file path where the downloaded cover will be saved.
+	 *
+	 * @return The cover file, or {@code null} if not set.
+	 */
 	File getCoverFile();
 
+	/**
+	 * Returns the name of the metadata download plugin to use.
+	 *
+	 * @return The allowed plugin name, or {@code null} to use all plugins.
+	 */
 	public String getAllowedPlugin();
 
+	/**
+	 * Returns whether the authors parameter is specified.
+	 *
+	 * @return {@code true} if authors mode is enabled, {@code false} otherwise.
+	 */
 	boolean isAuthors();
 
+	/**
+	 * Returns whether the ISBN parameter is specified.
+	 *
+	 * @return {@code true} if ISBN mode is enabled, {@code false} otherwise.
+	 */
 	boolean isIsbn();
 
+	/**
+	 * Returns whether output should be in OPF format.
+	 *
+	 * @return {@code true} if OPF output is enabled, {@code false} otherwise.
+	 */
 	boolean isOpf();
 
+	/**
+	 * Returns whether the title parameter is specified.
+	 *
+	 * @return {@code true} if title mode is enabled, {@code false} otherwise.
+	 */
 	boolean isTitle();
 
+	/**
+	 * Returns the timeout in seconds for the metadata fetch operation.
+	 *
+	 * @return The timeout in seconds, default is 30.
+	 */
 	long getTimeout();
 
 	/**

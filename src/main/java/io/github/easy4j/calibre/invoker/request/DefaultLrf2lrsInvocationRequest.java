@@ -37,30 +37,48 @@ public class DefaultLrf2lrsInvocationRequest extends AbstractInvocationRequest i
 	 */
 	private File outputDirectory;
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public boolean isDontOutputResources() {
 		return dontOutputResources;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public File getLrfFile() {
 		return lrfFile;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public File getOutputDirectory() {
 		return outputDirectory;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setLrfFile(File lrfFile) {
 		this.lrfFile = lrfFile;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setDontOutputResources(boolean dontOutputResources) {
 		this.dontOutputResources = dontOutputResources;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setOutputDirectory(File outputDirectory) {
 		this.outputDirectory = outputDirectory;

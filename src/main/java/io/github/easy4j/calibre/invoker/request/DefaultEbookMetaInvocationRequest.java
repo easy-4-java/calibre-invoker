@@ -68,34 +68,74 @@ public class DefaultEbookMetaInvocationRequest extends AbstractInvocationRequest
 	 */
 	private boolean titleSort;
 
+	/**
+	 * Returns whether the author-sort string should be auto-generated from the author(s).
+	 *
+	 * @return {@code true} if author-sort mode is enabled, {@code false} otherwise.
+	 */
 	public boolean isAuthorSort() {
 		return authorSort;
 	}
 
+	/**
+	 * Sets whether the author-sort string should be auto-generated from the author(s).
+	 *
+	 * @param authorSort {@code true} to enable author-sort mode, {@code false} otherwise.
+	 */
 	public void setAuthorSort(boolean authorSort) {
 		this.authorSort = authorSort;
 	}
 
+	/**
+	 * Returns whether metadata should be read from an OPF file.
+	 *
+	 * @return {@code true} if OPF mode is enabled, {@code false} otherwise.
+	 */
 	public boolean isFromOpf() {
 		return fromOpf;
 	}
 
+	/**
+	 * Sets whether metadata should be read from an OPF file.
+	 *
+	 * @param fromOpf {@code true} to read from OPF, {@code false} otherwise.
+	 */
 	public void setFromOpf(boolean fromOpf) {
 		this.fromOpf = fromOpf;
 	}
 
+	/**
+	 * Returns whether the cover should be extracted from the e-book.
+	 *
+	 * @return {@code true} if cover extraction is enabled, {@code false} otherwise.
+	 */
 	public boolean isGetCover() {
 		return getCover;
 	}
 
+	/**
+	 * Sets whether the cover should be extracted from the e-book.
+	 *
+	 * @param getCover {@code true} to extract the cover, {@code false} otherwise.
+	 */
 	public void setGetCover(boolean getCover) {
 		this.getCover = getCover;
 	}
 
+	/**
+	 * Returns whether the title-sort string should be auto-generated from the title.
+	 *
+	 * @return {@code true} if title-sort mode is enabled, {@code false} otherwise.
+	 */
 	public boolean isTitleSort() {
 		return titleSort;
 	}
 
+	/**
+	 * Sets whether the title-sort string should be auto-generated from the title.
+	 *
+	 * @param titleSort {@code true} to enable title-sort mode, {@code false} otherwise.
+	 */
 	public void setTitleSort(boolean titleSort) {
 		this.titleSort = titleSort;
 	}

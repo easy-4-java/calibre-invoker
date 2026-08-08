@@ -17,12 +17,36 @@ package io.github.easy4j.calibre.invoker.request;
 
 import java.io.File;
 
+/**
+ * Specifies the parameters used to control a Calibre {@code lrf2lrs} invocation. Converts
+ * an LRF file into an LRS (XML UTF-8 encoded) file.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see InvocationRequest
+ * @see io.github.easy4j.calibre.invoker.command.Lrf2lrsCommandLineBuilder
+ */
 public interface Lrf2lrsInvocationRequest extends InvocationRequest {
 
+	/**
+	 * Returns whether embedded image and font files should not be saved to disk.
+	 *
+	 * @return {@code true} if resource output is disabled, {@code false} otherwise.
+	 */
 	public boolean isDontOutputResources();
 
+	/**
+	 * Returns the LRF input file to convert.
+	 *
+	 * @return The LRF file path.
+	 */
 	public File getLrfFile();
-	
+
+	/**
+	 * Returns the output directory for the converted LRS file.
+	 *
+	 * @return The output directory, or {@code null} for the default location.
+	 */
 	public File getOutputDirectory();
 	
 	/**

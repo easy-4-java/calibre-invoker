@@ -20,10 +20,14 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 /**
- * Offers a logger that writes to a print stream like {@link System#out}.
- * 
- * @version $Id: PrintStreamLogger.java 1635406 2014-10-30 06:51:13Z hboutemy $
- * @since 2.0.9
+ * An {@link InvokerLogger} implementation that writes diagnostic messages to a {@link PrintStream}.
+ * Supports leveled logging (debug, info, warn, error, fatal) with configurable threshold filtering.
+ * Messages below the configured threshold are silently discarded.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see InvokerLogger
+ * @see SystemOutLogger
  */
 public class PrintStreamLogger implements InvokerLogger {
 

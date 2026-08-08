@@ -27,7 +27,14 @@ import io.github.easy4j.calibre.invoker.request.InvocationRequest;
 import io.github.easy4j.calibre.invoker.request.Lrs2lrfInvocationRequest;
 
 /**
- * Convert an LRF file into an LRS (XML UTF-8 encoded) file
+ * Command-line builder for the Calibre {@code lrf2lrs} tool. Constructs a command line to
+ * convert an LRF file into an LRS (XML UTF-8 encoded) file with optional resource output
+ * control and output directory configuration.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see AbstractCommandLineBuilder
+ * @see io.github.easy4j.calibre.invoker.request.Lrf2lrsInvocationRequest
  */
 public class Lrf2lrsCommandLineBuilder extends AbstractCommandLineBuilder {
 

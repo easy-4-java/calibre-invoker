@@ -16,7 +16,14 @@
 package io.github.easy4j.calibre.invoker;
 
 /**
- * Offers a logger that writes to {@link System#out}.
+ * An {@link InvokerLogger} that writes diagnostic messages directly to {@link System#out}.
+ * A convenience subclass of {@link PrintStreamLogger} pre-configured with an {@link #INFO}
+ * threshold.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see PrintStreamLogger
+ * @see InvokerLogger
  */
 public class SystemOutLogger extends PrintStreamLogger {
 

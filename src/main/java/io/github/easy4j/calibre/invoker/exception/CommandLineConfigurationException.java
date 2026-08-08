@@ -16,8 +16,15 @@
 package io.github.easy4j.calibre.invoker.exception;
 
 /**
- * Signals an error during the construction of the command line used to invoke
- * Maven.
+ * Signals an error during the construction of the command line used to invoke Calibre.
+ * This exception is thrown when command-line parameters cannot be properly configured,
+ * for example when the Calibre executable cannot be found or environment variables
+ * cannot be read.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see io.github.easy4j.calibre.invoker.command.AbstractCommandLineBuilder#build(io.github.easy4j.calibre.invoker.request.InvocationRequest)
+ * @see CalibreInvocationException
  */
 public class CommandLineConfigurationException extends Exception {
 
