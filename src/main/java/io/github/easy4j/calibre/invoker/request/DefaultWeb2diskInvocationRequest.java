@@ -71,110 +71,170 @@ public class DefaultWeb2diskInvocationRequest extends AbstractInvocationRequest 
 	 */
 	private String url;
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isDontDownloadStylesheets() {
 		return dontDownloadStylesheets;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public File getBaseDirectory() {
 		return baseDir;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public int getDelay() {
 		return delay;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getEncoding() {
 		return encoding;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getFilterRegexp() {
 		return filterRegexp;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getMatchRegexp() {
 		return matchRegexp;
 	}
-	
+
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public long getMaxFiles() {
 		return maxFiles;
 	}
-	
+
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public int getMaxRecursions() {
 		return maxRecursions;
 	}
-	
+
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public long getTimeout() {
 		return timeout;
 	}
-	
+
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getURL() {
 		return url;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setBaseDirectory(File baseDir) {
 		this.baseDir = baseDir;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setDelay(int delay) {
 		this.delay = delay;
 		return null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setDontDownloadStylesheets(boolean dontDownloadStylesheets) {
 		this.dontDownloadStylesheets = dontDownloadStylesheets;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setEncoding(String encoding) {
 		this.encoding = encoding;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setFilterRegexp(String filterRegexp) {
 		this.filterRegexp = filterRegexp;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setMatchRegexp(String matchRegexp) {
 		this.matchRegexp = matchRegexp;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setMaxFiles(long maxFiles) {
 		this.maxFiles = maxFiles;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setMaxRecursions(int maxRecursions) {
 		this.maxRecursions = maxRecursions;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setTimeout(long timeout) {
 		this.timeout = timeout;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setURL(String url) {
 		this.url = url;

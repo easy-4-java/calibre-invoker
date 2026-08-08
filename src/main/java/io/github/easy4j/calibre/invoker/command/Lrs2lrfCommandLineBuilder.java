@@ -26,7 +26,14 @@ import io.github.easy4j.calibre.invoker.request.InvocationRequest;
 import io.github.easy4j.calibre.invoker.request.Lrs2lrfInvocationRequest;
 
 /**
- * Compile an LRS file into an LRF file.
+ * Command-line builder for the Calibre {@code lrs2lrf} tool. Constructs a command line to
+ * compile an LRS file into an LRF file with optional output directory and LRS mode
+ * configuration.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see AbstractCommandLineBuilder
+ * @see io.github.easy4j.calibre.invoker.request.Lrs2lrfInvocationRequest
  */
 public class Lrs2lrfCommandLineBuilder extends AbstractCommandLineBuilder {
 

@@ -37,33 +37,51 @@ public class DefaultLrs2lrfInvocationRequest extends AbstractInvocationRequest i
 	 */
 	private File outputDirectory;
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isLrs() {
 		return lrs;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public File getLrsFile() {
 		return lrsFile;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public File getOutputDirectory() {
 		return outputDirectory;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setLrs(boolean lrs) {
 		this.lrs = lrs;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setOutputDirectory(File outputDirectory) {
 		this.outputDirectory = outputDirectory;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setLrsFile(File lrs) {
 		this.lrsFile = lrs;

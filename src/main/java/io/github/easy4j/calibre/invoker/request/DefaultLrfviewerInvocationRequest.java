@@ -49,55 +49,85 @@ public class DefaultLrfviewerInvocationRequest extends AbstractInvocationRequest
 	 */
 	private boolean whiteBackground;
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isDisableHyphenation() {
 		return disableHyphenation;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isProfile() {
 		return profile;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public File getLrsFile() {
 		return lrsFile;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isVisualDebug() {
 		return visualDebug;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isWhiteBackground() {
 		return whiteBackground;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setDisableHyphenation(boolean disableHyphenation) {
 		this.disableHyphenation = disableHyphenation;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setProfile(boolean profile) {
 		this.profile = profile;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setLrsFile(File lrsFile) {
 		this.lrsFile = lrsFile;
 		return this;
 	}
-	
+
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setVisualDebug(boolean visualDebug) {
 		this.visualDebug = visualDebug;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setWhiteBackground(boolean whiteBackground) {
 		this.whiteBackground = whiteBackground;

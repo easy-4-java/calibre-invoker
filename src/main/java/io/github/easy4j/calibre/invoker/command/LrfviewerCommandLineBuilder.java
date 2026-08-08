@@ -26,8 +26,14 @@ import io.github.easy4j.calibre.invoker.request.InvocationRequest;
 import io.github.easy4j.calibre.invoker.request.LrfviewerInvocationRequest;
 
 /**
- * Read the LRF e-book book.lrf
- * https://manual.calibre-ebook.com/generated/en/lrfviewer.html
+ * Command-line builder for the Calibre {@code lrfviewer} tool. Constructs a command line to
+ * view LRF e-books with configurable rendering options including hyphenation control,
+ * profiling, visual debugging, and background color.
+ *
+ * @author [@Loong Wan](https://github.com/loong10k)
+ * @since 3.0.0
+ * @see AbstractCommandLineBuilder
+ * @see io.github.easy4j.calibre.invoker.request.LrfviewerInvocationRequest
  */
 public class LrfviewerCommandLineBuilder extends AbstractCommandLineBuilder {
 

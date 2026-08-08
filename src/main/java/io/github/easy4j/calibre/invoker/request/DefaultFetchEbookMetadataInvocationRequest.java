@@ -61,77 +61,119 @@ public class DefaultFetchEbookMetadataInvocationRequest extends AbstractInvocati
 	 */
 	private boolean title;
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getAllowedPlugin() {
 		return allowedPlugin;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setAllowedPlugin(String allowedPlugin) {
 		this.allowedPlugin = allowedPlugin;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isAuthors() {
 		return authors;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setAuthors(boolean authors) {
 		this.authors = authors;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public File getCoverFile() {
 		return coverFile;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setCoverFile(File coverFile) {
 		this.coverFile = coverFile;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isIsbn() {
 		return isbn;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setIsbn(boolean isbn) {
 		this.isbn = isbn;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isOpf() {
 		return opf;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setOpf(boolean opf) {
 		this.opf = opf;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public long getTimeout() {
 		return timeout;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setTimeout(long timeout) {
 		this.timeout = timeout;
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isTitle() {
 		return title;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InvocationRequest setTitle(boolean title) {
 		this.title = title;
