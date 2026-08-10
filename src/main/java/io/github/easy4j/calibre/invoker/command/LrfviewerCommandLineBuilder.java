@@ -30,7 +30,7 @@ import io.github.easy4j.calibre.invoker.request.LrfviewerInvocationRequest;
  * view LRF e-books with configurable rendering options including hyphenation control,
  * profiling, visual debugging, and background color.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see AbstractCommandLineBuilder
  * @see io.github.easy4j.calibre.invoker.request.LrfviewerInvocationRequest

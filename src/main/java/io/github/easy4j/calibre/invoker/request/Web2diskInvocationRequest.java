@@ -22,7 +22,7 @@ import java.io.File;
  * tool downloads web pages to disk with configurable options such as base directory, delay,
  * encoding, filtering, and recursion depth.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see InvocationRequest
  * @see io.github.easy4j.calibre.invoker.command.Web2diskCommandLineBuilder

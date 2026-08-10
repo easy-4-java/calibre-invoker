@@ -22,7 +22,7 @@ import java.io.File;
  * title, authors or ISBN.
  * https://manual.calibre-ebook.com/generated/en/fetch-ebook-metadata.html
  * 
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  */
 public class DefaultFetchEbookMetadataInvocationRequest extends AbstractInvocationRequest
 		implements FetchEbookMetadataInvocationRequest {

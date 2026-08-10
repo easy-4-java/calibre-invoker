@@ -23,7 +23,7 @@ package io.github.easy4j.calibre.invoker.request;
  * <p>You should use this tool as the last step in your e-book creation process.</p>
  * <p>Note that polishing only works on files in the AZW3 or EPUB formats.</p>
  * https://manual.calibre-ebook.com/generated/en/ebook-polish.html
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  */
 public class DefaultEbookPolishInvocationRequest  extends AbstractInvocationRequest implements InvocationRequest {
 
