@@ -525,6 +525,9 @@
         <maven-nexus-staging-plugin.version>1.7.0</maven-nexus-staging-plugin.version>
         <metrics.version>4.2.20</metrics.version>
         <commons-text.version>1.15.0</commons-text.version>
+        <jsoup.version>1.22.2</jsoup.version>
+        <lombok.version>1.18.46</lombok.version>
+        <maven-jacoco-plugin.version>0.8.15</maven-jacoco-plugin.version>
     </properties>
 
     <!-- 依赖版本统一管理（dependencyManagement） -->
