@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Stream;
@@ -23,12 +24,12 @@ import org.junit.Test;
 public class PublicApiBaselineTest
 {
 
-    private static final Set<String> APPROVED_ADDITIVE_ABSTRACT_METHODS = new HashSet<>( Arrays.asList(
-            "METHOD io.github.easy4j.calibre.invoker.request.FetchEbookMetadataInvocationRequest#addAllowedPlugin(String):InvocationRequest",
-            "METHOD io.github.easy4j.calibre.invoker.request.FetchEbookMetadataInvocationRequest#setAllowedPlugins(List):InvocationRequest",
-            "METHOD io.github.easy4j.calibre.invoker.request.FetchEbookMetadataInvocationRequest#setAuthors(String):InvocationRequest",
-            "METHOD io.github.easy4j.calibre.invoker.request.FetchEbookMetadataInvocationRequest#setIsbn(String):InvocationRequest",
-            "METHOD io.github.easy4j.calibre.invoker.request.FetchEbookMetadataInvocationRequest#setTitle(String):InvocationRequest" ) );
+    private static final Set<String> APPROVED_ADDITIVE_ABSTRACT_METHOD_SIGNATURES = new HashSet<>( Arrays.asList(
+            "addAllowedPlugin(String):InvocationRequest",
+            "setAllowedPlugins(List):InvocationRequest",
+            "setAuthors(String):InvocationRequest",
+            "setIsbn(String):InvocationRequest",
+            "setTitle(String):InvocationRequest" ) );
 
     @Test
     public void publicTypesMatchBaseline() throws Exception
@@ -50,11 +51,73 @@ public class PublicApiBaselineTest
         List<String> baseline = Files.readAllLines(
                 Paths.get( "src/test/resources/api/calibre-invoker-2.0-public-types.txt" ),
                 StandardCharsets.UTF_8 );
-        Set<String> approvedMethods = new HashSet<>( baseline );
-        approvedMethods.addAll( APPROVED_ADDITIVE_ABSTRACT_METHODS );
+        Set<String> baselineTypes = PublicApiScanner.classNames( baseline );
+        Set<String> approvedMethods = PublicApiScanner.methodSignatures( baseline );
+        approvedMethods.addAll( APPROVED_ADDITIVE_ABSTRACT_METHOD_SIGNATURES );
 
         assertEquals( Collections.emptyList(), PublicApiScanner.findUnapprovedAbstractInterfaceMethods(
-                "io.github.easy4j.calibre.invoker", new HashSet<>( baseline ), approvedMethods ) );
+                "io.github.easy4j.calibre.invoker", baselineTypes, approvedMethods ) );
+    }
+
+    @Test
+    public void directAbstractAdditionIsRejected()
+    {
+        assertEquals( Collections.singletonList(
+                DirectAbstractAdditionContract.class.getName() + "#directAddition():void" ),
+                scanFixture( DirectAbstractAdditionContract.class,
+                        signatures( "existing():void" ) ) );
+    }
+
+    @Test
+    public void inheritedAbstractAdditionFromNewParentIsRejected()
+    {
+        assertEquals( Collections.singletonList(
+                InheritedAbstractAdditionContract.class.getName() + "#inheritedAddition():void" ),
+                scanFixture( InheritedAbstractAdditionContract.class,
+                        signatures( "existing():void" ) ) );
+    }
+
+    @Test
+    public void defaultAndStaticAdditionsAreAllowed()
+    {
+        assertEquals( Collections.emptyList(), scanFixture( DefaultAndStaticAdditionContract.class,
+                signatures( "existing():void" ) ) );
+    }
+
+    @Test
+    public void independentNewPublicInterfaceIsAllowed()
+    {
+        assertEquals( Collections.emptyList(), PublicApiScanner.findUnapprovedAbstractInterfaceMethods(
+                Arrays.asList( IndependentNewContract.class ), Collections.emptySet(),
+                Collections.emptySet() ) );
+    }
+
+    @Test
+    public void exactApprovedAbstractAdditionIsAllowed()
+    {
+        assertEquals( Collections.emptyList(), scanFixture( ExactApprovedAdditionContract.class,
+                signatures( "existing():void", "approved(String):void" ) ) );
+    }
+
+    @Test
+    public void nonApprovedSignatureIsRejected()
+    {
+        assertEquals( Collections.singletonList(
+                NonApprovedSignatureContract.class.getName() + "#approved(int):void" ),
+                scanFixture( NonApprovedSignatureContract.class,
+                        signatures( "existing():void", "approved(String):void" ) ) );
+    }
+
+    private List<String> scanFixture( Class<?> baselineType, Set<String> approvedSignatures )
+    {
+        return PublicApiScanner.findUnapprovedAbstractInterfaceMethods(
+                Arrays.asList( baselineType, IndependentNewContract.class ),
+                Collections.singleton( baselineType.getName() ), approvedSignatures );
+    }
+
+    private Set<String> signatures( String... signatures )
+    {
+        return new HashSet<>( Arrays.asList( signatures ) );
     }
 
     static final class PublicApiScanner
@@ -77,47 +140,85 @@ public class PublicApiBaselineTest
         }
 
         static List<String> findUnapprovedAbstractInterfaceMethods( String packageName,
-                Set<String> baselineDescriptors, Set<String> approvedMethods ) throws Exception
+                Set<String> baselineTypeNames, Set<String> approvedMethodSignatures ) throws Exception
         {
             Path classesDirectory = Paths.get( Invoker.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
             Path packageDirectory = classesDirectory.resolve( packageName.replace( '.', '/' ) );
-            TreeSet<String> violations = new TreeSet<>();
+            List<Class<?>> publicTypes = new ArrayList<>();
             try ( Stream<Path> paths = Files.walk( packageDirectory ) )
             {
                 paths.filter( Files::isRegularFile )
                         .filter( path -> path.toString().endsWith( ".class" ) )
                         .map( packageDirectory::relativize )
                         .map( path -> toClassName( packageName, path ) )
-                        .forEach( className -> addUnapprovedAbstractMethods( violations, className,
-                                baselineDescriptors, approvedMethods ) );
+                        .map( PublicApiScanner::loadPublicType )
+                        .filter( Objects::nonNull )
+                        .forEach( publicTypes::add );
             }
-            return new ArrayList<>( violations );
+            return findUnapprovedAbstractInterfaceMethods(
+                    publicTypes, baselineTypeNames, approvedMethodSignatures );
         }
 
-        private static void addUnapprovedAbstractMethods( TreeSet<String> violations, String className,
-                Set<String> baselineDescriptors, Set<String> approvedMethods )
+        static List<String> findUnapprovedAbstractInterfaceMethods( Iterable<Class<?>> publicTypes,
+                Set<String> baselineTypeNames, Set<String> approvedMethodSignatures )
         {
-            try
+            TreeSet<String> violations = new TreeSet<>();
+            for ( Class<?> type : publicTypes )
             {
-                Class<?> type = Class.forName( className, false, Invoker.class.getClassLoader() );
                 if ( !Modifier.isPublic( type.getModifiers() ) || !type.isInterface()
-                        || !baselineDescriptors.contains( "CLASS " + type.getName() ) )
+                        || !baselineTypeNames.contains( type.getName() ) )
                 {
-                    return;
+                    continue;
                 }
-                for ( Method method : type.getDeclaredMethods() )
+                for ( Method method : type.getMethods() )
                 {
                     if ( Modifier.isPublic( method.getModifiers() )
                             && Modifier.isAbstract( method.getModifiers() )
                             && !method.isBridge() && !method.isSynthetic() )
                     {
-                        String descriptor = methodDescriptor( type, method );
-                        if ( !approvedMethods.contains( descriptor ) )
+                        String signature = methodSignature( method );
+                        if ( !approvedMethodSignatures.contains( signature ) )
                         {
-                            violations.add( descriptor );
+                            violations.add( type.getName() + "#" + signature );
                         }
                     }
                 }
+            }
+            return new ArrayList<>( violations );
+        }
+
+        static Set<String> classNames( Iterable<String> descriptors )
+        {
+            Set<String> classNames = new HashSet<>();
+            for ( String descriptor : descriptors )
+            {
+                if ( descriptor.startsWith( "CLASS " ) )
+                {
+                    classNames.add( descriptor.substring( "CLASS ".length() ) );
+                }
+            }
+            return classNames;
+        }
+
+        static Set<String> methodSignatures( Iterable<String> descriptors )
+        {
+            Set<String> signatures = new HashSet<>();
+            for ( String descriptor : descriptors )
+            {
+                if ( descriptor.startsWith( "METHOD " ) )
+                {
+                    signatures.add( descriptor.substring( descriptor.indexOf( '#' ) + 1 ) );
+                }
+            }
+            return signatures;
+        }
+
+        private static Class<?> loadPublicType( String className )
+        {
+            try
+            {
+                Class<?> type = Class.forName( className, false, Invoker.class.getClassLoader() );
+                return Modifier.isPublic( type.getModifiers() ) ? type : null;
             }
             catch ( ClassNotFoundException exception )
             {
@@ -157,15 +258,69 @@ public class PublicApiBaselineTest
 
         private static String methodDescriptor( Class<?> type, Method method )
         {
+            return "METHOD " + type.getName() + "#" + methodSignature( method );
+        }
+
+        private static String methodSignature( Method method )
+        {
             List<String> parameterTypes = new ArrayList<>();
             for ( Class<?> parameterType : method.getParameterTypes() )
             {
                 parameterTypes.add( parameterType.getSimpleName() );
             }
-            return "METHOD " + type.getName() + "#" + method.getName() + "("
-                    + String.join( ",", parameterTypes ) + "):" + method.getReturnType().getSimpleName();
+            return method.getName() + "(" + String.join( ",", parameterTypes ) + "):"
+                    + method.getReturnType().getSimpleName();
         }
 
+    }
+
+    public interface DirectAbstractAdditionContract
+    {
+        void existing();
+
+        void directAddition();
+    }
+
+    public interface NewParentContract
+    {
+        void inheritedAddition();
+    }
+
+    public interface InheritedAbstractAdditionContract extends NewParentContract
+    {
+        void existing();
+    }
+
+    public interface DefaultAndStaticAdditionContract
+    {
+        void existing();
+
+        default void defaultAddition()
+        {
+        }
+
+        static void staticAddition()
+        {
+        }
+    }
+
+    public interface IndependentNewContract
+    {
+        void independentMethod();
+    }
+
+    public interface ExactApprovedAdditionContract
+    {
+        void existing();
+
+        void approved( String value );
+    }
+
+    public interface NonApprovedSignatureContract
+    {
+        void existing();
+
+        void approved( int value );
     }
 
 }
