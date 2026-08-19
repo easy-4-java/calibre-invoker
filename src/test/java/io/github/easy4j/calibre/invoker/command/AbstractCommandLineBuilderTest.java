@@ -41,6 +41,15 @@ public class AbstractCommandLineBuilderTest {
      * Concrete test subclass to test abstract methods.
      */
     private static class TestCommandLineBuilder extends AbstractCommandLineBuilder {
+
+        TestCommandLineBuilder() {
+            super();
+        }
+
+        TestCommandLineBuilder(CalibreExecutableResolver executableResolver) {
+            super(executableResolver);
+        }
+
         @Override
         protected void doCommandInternal(InvocationRequest request, Commandline cli)
                 throws CommandLineConfigurationException {
@@ -52,6 +61,47 @@ public class AbstractCommandLineBuilderTest {
             // Return a dummy file for testing
             File dummy = new File("/tmp/calibre");
             return dummy;
+        }
+
+        File resolveExecutable(String commandName, File requestHome)
+                throws CommandLineConfigurationException {
+            return resolveCalibreExecutable(commandName, requestHome);
+        }
+    }
+
+    @Test
+    public void shouldUseInjectedResolverWithRequestAndConfiguredHomes() throws Exception {
+        RecordingResolver resolver = new RecordingResolver(new File("/resolved/web2disk"));
+        TestCommandLineBuilder builder = new TestCommandLineBuilder(resolver);
+        File requestHome = new File("/request");
+        File invokerHome = new File("/invoker");
+        builder.setCalibreHome(invokerHome);
+
+        File result = builder.resolveExecutable("web2disk", requestHome);
+
+        assertEquals(new File("/resolved/web2disk"), result);
+        assertEquals("web2disk", resolver.commandName);
+        assertEquals(requestHome, resolver.requestHome);
+        assertEquals(invokerHome, resolver.invokerHome);
+    }
+
+    private static final class RecordingResolver extends CalibreExecutableResolver {
+
+        private final File resolved;
+        private String commandName;
+        private File requestHome;
+        private File invokerHome;
+
+        private RecordingResolver(File resolved) {
+            this.resolved = resolved;
+        }
+
+        @Override
+        public File resolve(String commandName, File requestHome, File invokerHome) {
+            this.commandName = commandName;
+            this.requestHome = requestHome;
+            this.invokerHome = invokerHome;
+            return resolved;
         }
     }
 

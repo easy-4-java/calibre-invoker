@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Properties;
 
 import org.codehaus.plexus.util.StringUtils;
@@ -47,6 +48,8 @@ public abstract class AbstractCommandLineBuilder {
 	
 	private static final InvokerLogger DEFAULT_LOGGER = new SystemOutLogger();
 
+	private final CalibreExecutableResolver executableResolver;
+
 	protected InvokerLogger logger = DEFAULT_LOGGER;
 
 	protected File workingDirectory;
@@ -58,6 +61,18 @@ public abstract class AbstractCommandLineBuilder {
 	protected File calibreExecutable;
 
 	protected Properties systemEnvVars;
+
+	/**
+	 * Creates a command-line builder using the production executable resolver.
+	 */
+	public AbstractCommandLineBuilder() {
+		this(new CalibreExecutableResolver());
+	}
+
+	AbstractCommandLineBuilder(CalibreExecutableResolver executableResolver) {
+		this.executableResolver = Objects.requireNonNull(executableResolver,
+				"executableResolver must not be null");
+	}
 
 	/**
 	 * Builds a {@link Commandline} for the given invocation request. This method orchestrates
@@ -122,6 +137,11 @@ public abstract class AbstractCommandLineBuilder {
 	 * @throws IOException If an I/O error occurs while resolving the executable.
 	 */
 	protected abstract File findCalibreExecutable() throws CommandLineConfigurationException, IOException;
+
+	final File resolveCalibreExecutable(String commandName, File requestHome)
+			throws CommandLineConfigurationException {
+		return executableResolver.resolve(commandName, requestHome, calibreHome);
+	}
 	
 	
 	/**
@@ -131,7 +151,7 @@ public abstract class AbstractCommandLineBuilder {
 	 * @throws IllegalStateException If a required field (e.g. logger) is not set.
 	 */
 	protected void checkRequiredState() throws IOException {
-		if (logger == null) {
+		if (Objects.isNull(logger)) {
 			throw new IllegalStateException("A logger instance is required.");
 		}
 	}
@@ -166,7 +186,7 @@ public abstract class AbstractCommandLineBuilder {
 			}
 		}
 
-		if (request.getCalibreHome() != null) {
+		if (Objects.nonNull(request.getCalibreHome())) {
 			cli.addEnvironment("CALIBRE_HOME", request.getCalibreHome().getAbsolutePath());
 		}
 
@@ -184,7 +204,7 @@ public abstract class AbstractCommandLineBuilder {
 	 */
 	protected void setGoals(InvocationRequest request, Commandline cli) {
 		List<String> goals = request.getGoals();
-		if ((goals != null) && !goals.isEmpty()) {
+		if (Objects.nonNull(goals) && !goals.isEmpty()) {
 			cli.createArg().setLine(StringUtils.join(goals.iterator(), " "));
 		}
 	}
@@ -198,7 +218,7 @@ public abstract class AbstractCommandLineBuilder {
 	protected void setProperties(InvocationRequest request, Commandline cli) {
 		Properties properties = request.getProperties();
 
-		if (properties != null) {
+		if (Objects.nonNull(properties)) {
 			for (Iterator<Entry<Object, Object>> it = properties.entrySet().iterator(); it.hasNext();) {
 				Entry<Object, Object> entry = it.next();
 
@@ -220,9 +240,9 @@ public abstract class AbstractCommandLineBuilder {
 	 * @throws IOException If an I/O error occurs while reading environment variables.
 	 */
 	protected File findCalibreHome() throws CommandLineConfigurationException, IOException {
-		if (calibreHome == null) {
+		if (Objects.isNull(calibreHome)) {
 			String calibreHomeProperty = System.getProperty("calibre.home");
-			if (calibreHomeProperty != null) {
+			if (StringUtils.isNotEmpty(calibreHomeProperty)) {
 				calibreHome = new File(calibreHomeProperty);
 				if (!calibreHome.isDirectory()) {
 					throw new IllegalStateException(
@@ -230,7 +250,8 @@ public abstract class AbstractCommandLineBuilder {
 				}
 			}
 			
-			if ((calibreHome == null) && (getSystemEnvVars().getProperty("CALIBRE_HOME") != null)) {
+			if (Objects.isNull(calibreHome)
+					&& StringUtils.isNotEmpty(getSystemEnvVars().getProperty("CALIBRE_HOME"))) {
 				calibreHome = new File(getSystemEnvVars().getProperty("CALIBRE_HOME"));
 			}
 		}
@@ -250,7 +271,7 @@ public abstract class AbstractCommandLineBuilder {
 	}
 
 	private Properties getSystemEnvVars() throws IOException {
-		if (this.systemEnvVars == null) {
+		if (Objects.isNull(this.systemEnvVars)) {
 			// with 1.5 replace with System.getenv()
 			this.systemEnvVars = CommandLineUtils.getSystemEnvVars();
 		}
