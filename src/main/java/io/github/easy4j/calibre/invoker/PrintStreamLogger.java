@@ -24,7 +24,7 @@ import java.io.StringWriter;
  * Supports leveled logging (debug, info, warn, error, fatal) with configurable threshold filtering.
  * Messages below the configured threshold are silently discarded.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see InvokerLogger
  * @see SystemOutLogger

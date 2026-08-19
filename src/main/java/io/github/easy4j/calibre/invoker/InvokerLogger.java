@@ -20,7 +20,7 @@ package io.github.easy4j.calibre.invoker;
  * Provides leveled logging capabilities (debug, info, warn, error, fatal) with
  * configurable threshold filtering.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see Invoker#setLogger(InvokerLogger)
  * @see PrintStreamLogger

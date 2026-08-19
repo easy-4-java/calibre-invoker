@@ -18,7 +18,7 @@ package io.github.easy4j.calibre.invoker.request;
 /**
  * View an e-book.
  * https://manual.calibre-ebook.com/generated/en/ebook-viewer.html
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  */
 public class DefaultEbookViewerInvocationRequest extends AbstractInvocationRequest implements InvocationRequest  {
 

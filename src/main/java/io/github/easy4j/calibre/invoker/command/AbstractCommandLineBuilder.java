@@ -38,7 +38,7 @@ import io.github.easy4j.calibre.invoker.request.InvocationRequest;
  * configuring properties, goals, and verbose mode. Subclasses implement
  * tool-specific command-line construction.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see Web2diskCommandLineBuilder
  * @see io.github.easy4j.calibre.invoker.request.InvocationRequest

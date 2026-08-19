@@ -32,7 +32,7 @@ import io.github.easy4j.calibre.invoker.request.InvocationRequest;
  * line to fetch book metadata from online sources. At least one of title, authors, or ISBN
  * must be specified.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see AbstractCommandLineBuilder
  * @see io.github.easy4j.calibre.invoker.request.FetchEbookMetadataInvocationRequest
