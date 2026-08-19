@@ -16,9 +16,9 @@
 package io.github.easy4j.calibre.invoker;
 
 import java.io.File;
+import java.util.Objects;
 
 import org.codehaus.plexus.util.cli.CommandLineException;
-import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.codehaus.plexus.util.cli.Commandline;
 
 import io.github.easy4j.calibre.invoker.command.AbstractCommandLineBuilder;
@@ -74,6 +74,16 @@ public class DefaultInvoker implements Invoker {
 	private InvocationOutputHandler outputHandler = DEFAULT_OUTPUT_HANDLER;
 
 	private InvocationOutputHandler errorHandler = DEFAULT_OUTPUT_HANDLER;
+
+	private final ProcessExecutor processExecutor;
+
+	public DefaultInvoker() {
+		this(new PlexusProcessExecutor());
+	}
+
+	DefaultInvoker(ProcessExecutor processExecutor) {
+		this.processExecutor = Objects.requireNonNull(processExecutor, "processExecutor must not be null");
+	}
 	
 	/**
 	 * Returns the appropriate command-line builder for the given invocation request type.
@@ -146,7 +156,7 @@ public class DefaultInvoker implements Invoker {
 		if (getLogger().isDebugEnabled()) {
 			getLogger().debug("Executing: " + cli);
 		}
-		result = CommandLineUtils.executeCommandLine(cli, outputHandler, errorHandler);
+		result = processExecutor.execute(cli, outputHandler, errorHandler);
 		return result;
 	}
 

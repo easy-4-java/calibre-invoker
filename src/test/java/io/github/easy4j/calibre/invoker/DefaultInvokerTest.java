@@ -18,13 +18,22 @@ package io.github.easy4j.calibre.invoker;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.io.IOException;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import io.github.easy4j.calibre.invoker.request.DefaultWeb2diskInvocationRequest;
+import io.github.easy4j.calibre.invoker.support.RecordingProcessExecutor;
 
 /**
  * Tests for {@link DefaultInvoker}.
  */
 public class DefaultInvokerTest {
+
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
     public void shouldCreateWithDefaultValues() {
@@ -132,5 +141,27 @@ public class DefaultInvokerTest {
         // InvocationRequest is an interface, not a Web2diskInvocationRequest
         // so getCommandLineBuilder should return null
         assertNull(invoker.getCommandLineBuilder(new io.github.easy4j.calibre.invoker.request.DefaultEbookConvertInvocationRequest()));
+    }
+
+    @Test
+    public void executeDelegatesToInjectedProcessExecutor() throws Exception {
+        RecordingProcessExecutor executor = new RecordingProcessExecutor(7);
+        DefaultInvoker invoker = new DefaultInvoker(executor);
+        invoker.setCalibreHome(createFakeCalibreHome());
+        InvocationResult result = invoker.execute(validWeb2diskRequest());
+        assertEquals(7, result.getExitCode());
+        assertEquals("web2disk", executor.getExecutableName());
+    }
+
+    private File createFakeCalibreHome() throws IOException {
+        File calibreHome = temporaryFolder.newFolder("calibre-home");
+        assertTrue(new File(calibreHome, "web2disk").createNewFile());
+        return calibreHome;
+    }
+
+    private DefaultWeb2diskInvocationRequest validWeb2diskRequest() {
+        DefaultWeb2diskInvocationRequest request = new DefaultWeb2diskInvocationRequest();
+        request.setURL("https://example.com");
+        return request;
     }
 }
