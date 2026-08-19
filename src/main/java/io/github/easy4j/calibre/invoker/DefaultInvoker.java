@@ -22,11 +22,10 @@ import org.codehaus.plexus.util.cli.CommandLineException;
 import org.codehaus.plexus.util.cli.Commandline;
 
 import io.github.easy4j.calibre.invoker.command.AbstractCommandLineBuilder;
-import io.github.easy4j.calibre.invoker.command.Web2diskCommandLineBuilder;
+import io.github.easy4j.calibre.invoker.command.CommandLineBuilderRegistry;
 import io.github.easy4j.calibre.invoker.exception.CalibreInvocationException;
 import io.github.easy4j.calibre.invoker.exception.CommandLineConfigurationException;
 import io.github.easy4j.calibre.invoker.request.InvocationRequest;
-import io.github.easy4j.calibre.invoker.request.Web2diskInvocationRequest;
 
 /**
  * Default implementation of {@link Invoker} intended to be used by clients who wish to invoke
@@ -77,57 +76,62 @@ public class DefaultInvoker implements Invoker {
 
 	private final ProcessExecutor processExecutor;
 
+	private final CommandLineBuilderRegistry commandLineBuilderRegistry;
+
 	public DefaultInvoker() {
-		this(new PlexusProcessExecutor());
+		this(new PlexusProcessExecutor(), CommandLineBuilderRegistry.defaultRegistry());
 	}
 
 	DefaultInvoker(ProcessExecutor processExecutor) {
+		this(processExecutor, CommandLineBuilderRegistry.defaultRegistry());
+	}
+
+	DefaultInvoker(ProcessExecutor processExecutor, CommandLineBuilderRegistry commandLineBuilderRegistry) {
 		this.processExecutor = Objects.requireNonNull(processExecutor, "processExecutor must not be null");
+		this.commandLineBuilderRegistry = Objects.requireNonNull(commandLineBuilderRegistry,
+				"commandLineBuilderRegistry must not be null");
 	}
 	
 	/**
 	 * Returns the appropriate command-line builder for the given invocation request type.
 	 *
 	 * @param request The invocation request to build a command line for, must not be {@code null}.
-	 * @return The command-line builder for the request type, or {@code null} if no builder
-	 *         is available for the request type.
+	 * @return The command-line builder for the request type, never {@code null}.
+	 * @throws CommandLineConfigurationException If the request is {@code null} or unsupported.
 	 */
-	protected AbstractCommandLineBuilder getCommandLineBuilder(InvocationRequest request) {
-		if(request instanceof Web2diskInvocationRequest) {
-			return new Web2diskCommandLineBuilder();
-		}
-		return null;
+	protected AbstractCommandLineBuilder getCommandLineBuilder(InvocationRequest request)
+			throws CommandLineConfigurationException {
+		return commandLineBuilderRegistry.create(request);
 	}
 	
 	/**
 	 * {@inheritDoc}
 	 */
 	public InvocationResult execute(InvocationRequest request) throws CalibreInvocationException {
-		
-		AbstractCommandLineBuilder cliBuilder = getCommandLineBuilder(request);
-
-		InvokerLogger logger = getLogger();
-		if (logger != null) {
-			cliBuilder.setLogger(getLogger());
-		}
-
-		File ebookRepo = getEbookRepositoryDirectory();
-		if (ebookRepo != null) {
-			cliBuilder.setLocalRepositoryDirectory(getEbookRepositoryDirectory());
-		}
-
-		File calibreHome = getCalibreHome();
-		if (calibreHome != null) {
-			cliBuilder.setCalibreHome(getCalibreHome());
-		}
-		
-		File workingDirectory = getWorkingDirectory();
-		if (workingDirectory != null) {
-			cliBuilder.setWorkingDirectory(getWorkingDirectory());
-		}
-
 		Commandline cli;
 		try {
+			AbstractCommandLineBuilder cliBuilder = getCommandLineBuilder(request);
+
+			InvokerLogger logger = getLogger();
+			if (Objects.nonNull(logger)) {
+				cliBuilder.setLogger(logger);
+			}
+
+			File ebookRepo = getEbookRepositoryDirectory();
+			if (Objects.nonNull(ebookRepo)) {
+				cliBuilder.setLocalRepositoryDirectory(ebookRepo);
+			}
+
+			File calibreHome = getCalibreHome();
+			if (Objects.nonNull(calibreHome)) {
+				cliBuilder.setCalibreHome(calibreHome);
+			}
+
+			File workingDirectory = getWorkingDirectory();
+			if (Objects.nonNull(workingDirectory)) {
+				cliBuilder.setWorkingDirectory(workingDirectory);
+			}
+
 			cli = cliBuilder.build(request);
 		} catch (CommandLineConfigurationException e) {
 			throw new CalibreInvocationException("Error configuring command-line. Reason: " + e.getMessage(), e);
@@ -171,7 +175,7 @@ public class DefaultInvoker implements Invoker {
 	 * {@inheritDoc}
 	 */
 	public Invoker setLogger(InvokerLogger logger) {
-		this.logger = (logger != null) ? logger : DEFAULT_LOGGER;
+		this.logger = Objects.nonNull(logger) ? logger : DEFAULT_LOGGER;
 		return this;
 	}
 	

@@ -15,7 +15,12 @@
  */
 package io.github.easy4j.calibre.invoker;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +30,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import io.github.easy4j.calibre.invoker.command.CommandLineBuilderRegistry;
+import io.github.easy4j.calibre.invoker.command.Web2diskCommandLineBuilder;
+import io.github.easy4j.calibre.invoker.exception.CalibreInvocationException;
+import io.github.easy4j.calibre.invoker.request.DefaultEbookConvertInvocationRequest;
 import io.github.easy4j.calibre.invoker.request.DefaultWeb2diskInvocationRequest;
 import io.github.easy4j.calibre.invoker.support.RecordingProcessExecutor;
 
@@ -137,11 +146,34 @@ public class DefaultInvokerTest {
     }
 
     @Test
-    public void shouldReturnNullBuilderForUnknownRequestType() {
-        DefaultInvoker invoker = new DefaultInvoker();
-        // InvocationRequest is an interface, not a Web2diskInvocationRequest
-        // so getCommandLineBuilder should return null
-        assertNull(invoker.getCommandLineBuilder(new io.github.easy4j.calibre.invoker.request.DefaultEbookConvertInvocationRequest()));
+    public void unsupportedRequestBecomesCheckedInvocationError() {
+        DefaultInvoker invoker = new DefaultInvoker(new RecordingProcessExecutor(0));
+        DefaultEbookConvertInvocationRequest request = new DefaultEbookConvertInvocationRequest();
+
+        CalibreInvocationException exception = assertThrows(CalibreInvocationException.class,
+                () -> invoker.execute(request));
+
+        assertTrue(exception.getMessage().contains(request.getClass().getName()));
+    }
+
+    @Test
+    public void nullRequestBecomesCheckedInvocationError() {
+        DefaultInvoker invoker = new DefaultInvoker(new RecordingProcessExecutor(0));
+
+        CalibreInvocationException exception = assertThrows(CalibreInvocationException.class,
+                () -> invoker.execute(null));
+
+        assertTrue(exception.getMessage().contains("must not be null"));
+    }
+
+    @Test
+    public void injectedRegistryControlsBuilderRouting() throws Exception {
+        CommandLineBuilderRegistry registry = new CommandLineBuilderRegistry()
+                .register(DefaultEbookConvertInvocationRequest.class, Web2diskCommandLineBuilder::new);
+        DefaultInvoker invoker = new DefaultInvoker(new RecordingProcessExecutor(0), registry);
+
+        assertTrue(invoker.getCommandLineBuilder(new DefaultEbookConvertInvocationRequest())
+                instanceof Web2diskCommandLineBuilder);
     }
 
     @Test
