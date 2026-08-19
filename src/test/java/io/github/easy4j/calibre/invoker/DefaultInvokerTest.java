@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 
+import org.codehaus.plexus.util.Os;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -150,13 +151,17 @@ public class DefaultInvokerTest {
         invoker.setCalibreHome(createFakeCalibreHome());
         InvocationResult result = invoker.execute(validWeb2diskRequest());
         assertEquals(7, result.getExitCode());
-        assertEquals("web2disk", executor.getExecutableName());
+        assertEquals(web2diskExecutableName(), executor.getExecutableName());
     }
 
     private File createFakeCalibreHome() throws IOException {
         File calibreHome = temporaryFolder.newFolder("calibre-home");
-        assertTrue(new File(calibreHome, "web2disk").createNewFile());
+        assertTrue(new File(calibreHome, web2diskExecutableName()).createNewFile());
         return calibreHome;
+    }
+
+    private String web2diskExecutableName() {
+        return Os.isFamily("windows") ? "web2disk.exe" : "web2disk";
     }
 
     private DefaultWeb2diskInvocationRequest validWeb2diskRequest() {
