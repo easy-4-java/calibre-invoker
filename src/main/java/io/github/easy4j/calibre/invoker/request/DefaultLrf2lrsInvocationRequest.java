@@ -20,7 +20,7 @@ import java.io.File;
 /**
  * https://manual.calibre-ebook.com/generated/en/lrf2lrs.html
  * 
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  */
 public class DefaultLrf2lrsInvocationRequest extends AbstractInvocationRequest implements Lrf2lrsInvocationRequest {
 

@@ -20,7 +20,7 @@ package io.github.easy4j.calibre.invoker;
  * A convenience subclass of {@link PrintStreamLogger} pre-configured with an {@link #INFO}
  * threshold.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see PrintStreamLogger
  * @see InvokerLogger

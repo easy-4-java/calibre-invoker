@@ -30,7 +30,7 @@ import io.github.easy4j.calibre.invoker.request.Lrs2lrfInvocationRequest;
  * compile an LRS file into an LRF file with optional output directory and LRS mode
  * configuration.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see AbstractCommandLineBuilder
  * @see io.github.easy4j.calibre.invoker.request.Lrs2lrfInvocationRequest

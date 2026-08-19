@@ -23,7 +23,7 @@ import io.github.easy4j.calibre.invoker.InvocationResult;
  * with a failure of the invoked Calibre process itself which will be reported by means of a
  * non-zero exit code via {@link InvocationResult#getExitCode()}.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see InvocationResult#getExitCode()
  * @see io.github.easy4j.calibre.invoker.Invoker#execute(io.github.easy4j.calibre.invoker.request.InvocationRequest)

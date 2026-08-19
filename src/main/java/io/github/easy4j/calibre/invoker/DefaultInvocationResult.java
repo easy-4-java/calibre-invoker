@@ -23,7 +23,7 @@ import org.codehaus.plexus.util.cli.CommandLineException;
  * invocation. Stores both the exit code reported by the Calibre process and any exception
  * that occurred during execution.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see InvocationResult
  * @see DefaultInvoker

@@ -22,7 +22,7 @@ import org.codehaus.plexus.util.cli.CommandLineException;
  * Describes the result of a Calibre invocation. Provides access to the exit code reported
  * by the Calibre process and any exception that occurred during execution.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see DefaultInvocationResult
  * @see Invoker#execute(io.github.easy4j.calibre.invoker.request.InvocationRequest)

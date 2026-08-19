@@ -46,7 +46,7 @@ package io.github.easy4j.calibre.invoker.request;
  * then use the -h option.
  * </p>
  * https://manual.calibre-ebook.com/generated/en/ebook-convert.html
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  */
 public class DefaultEbookConvertInvocationRequest  extends AbstractInvocationRequest implements InvocationRequest {
 

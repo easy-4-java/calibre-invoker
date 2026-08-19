@@ -19,7 +19,7 @@ import java.io.File;
 
 /**
  * https://manual.calibre-ebook.com/generated/en/lrfviewer.html
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  */
 public class DefaultLrfviewerInvocationRequest extends AbstractInvocationRequest implements LrfviewerInvocationRequest {
 

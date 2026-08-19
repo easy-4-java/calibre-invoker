@@ -22,7 +22,7 @@ import java.io.File;
  * LRF e-books with configurable rendering options including hyphenation, profiling,
  * visual debugging, and background color.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see InvocationRequest
  * @see io.github.easy4j.calibre.invoker.command.LrfviewerCommandLineBuilder

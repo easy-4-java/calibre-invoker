@@ -21,7 +21,7 @@ package io.github.easy4j.calibre.invoker.exception;
  * for example when the Calibre executable cannot be found or environment variables
  * cannot be read.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see io.github.easy4j.calibre.invoker.command.AbstractCommandLineBuilder#build(io.github.easy4j.calibre.invoker.request.InvocationRequest)
  * @see CalibreInvocationException
