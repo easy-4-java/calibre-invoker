@@ -16,6 +16,12 @@
 package io.github.easy4j.calibre.invoker.request;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Fetch book metadata from online sources. You must specify at least one of
@@ -33,12 +39,13 @@ public class DefaultFetchEbookMetadataInvocationRequest extends AbstractInvocati
 	 * plugins. All plugin names: Google, Google Images, Amazon.com, Edelweiss, Open
 	 * Library, Overdrive, Douban Books, OZON.ru, Big Book Search.
 	 */
-	private String allowedPlugin;
+	private final List<String> allowedPlugins = new ArrayList<>();
 
 	/**
 	 * Book author(s)
 	 */
-	private boolean authors;
+	private String authors;
+	private boolean legacyAuthorsRequested;
 	/**
 	 * Specify a filename. The cover, if available, will be saved to it. Without
 	 * this option, no cover will be downloaded.
@@ -47,7 +54,8 @@ public class DefaultFetchEbookMetadataInvocationRequest extends AbstractInvocati
 	/**
 	 * Book ISBN
 	 */
-	private boolean isbn;
+	private String isbn;
+	private boolean legacyIsbnRequested;
 	/**
 	 * Output the metadata in OPF format instead of human readable text.
 	 */
@@ -59,14 +67,15 @@ public class DefaultFetchEbookMetadataInvocationRequest extends AbstractInvocati
 	/**
 	 * Book title
 	 */
-	private boolean title;
+	private String title;
+	private boolean legacyTitleRequested;
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public String getAllowedPlugin() {
-		return allowedPlugin;
+		return allowedPlugins.isEmpty() ? null : allowedPlugins.get(0);
 	}
 
 	/**
@@ -74,24 +83,66 @@ public class DefaultFetchEbookMetadataInvocationRequest extends AbstractInvocati
 	 */
 	@Override
 	public InvocationRequest setAllowedPlugin(String allowedPlugin) {
-		this.allowedPlugin = allowedPlugin;
+		allowedPlugins.clear();
+		addAllowedPlugin(allowedPlugin);
+		return this;
+	}
+
+	@Override
+	public List<String> getAllowedPlugins() {
+		return Collections.unmodifiableList(new ArrayList<>(allowedPlugins));
+	}
+
+	@Override
+	public InvocationRequest setAllowedPlugins(List<String> allowedPlugins) {
+		this.allowedPlugins.clear();
+		if (Objects.nonNull(allowedPlugins)) {
+			for (String allowedPlugin : allowedPlugins) {
+				addAllowedPlugin(allowedPlugin);
+			}
+		}
+		return this;
+	}
+
+	@Override
+	public InvocationRequest addAllowedPlugin(String allowedPlugin) {
+		if (StringUtils.isNotBlank(allowedPlugin)) {
+			allowedPlugins.add(allowedPlugin);
+		}
+		return this;
+	}
+
+	@Override
+	public String getAuthors() {
+		return authors;
+	}
+
+	@Override
+	public InvocationRequest setAuthors(String authors) {
+		this.authors = authors;
+		this.legacyAuthorsRequested = false;
 		return this;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	@Deprecated
 	@Override
 	public boolean isAuthors() {
-		return authors;
+		return legacyAuthorsRequested || StringUtils.isNotBlank(authors);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	@Deprecated
 	@Override
 	public InvocationRequest setAuthors(boolean authors) {
-		this.authors = authors;
+		this.legacyAuthorsRequested = authors;
+		if (!authors) {
+			this.authors = null;
+		}
 		return this;
 	}
 
@@ -116,16 +167,33 @@ public class DefaultFetchEbookMetadataInvocationRequest extends AbstractInvocati
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean isIsbn() {
+	public String getIsbn() {
 		return isbn;
+	}
+
+	@Override
+	public InvocationRequest setIsbn(String isbn) {
+		this.isbn = isbn;
+		this.legacyIsbnRequested = false;
+		return this;
+	}
+
+	@Deprecated
+	@Override
+	public boolean isIsbn() {
+		return legacyIsbnRequested || StringUtils.isNotBlank(isbn);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	@Deprecated
 	@Override
 	public InvocationRequest setIsbn(boolean isbn) {
-		this.isbn = isbn;
+		this.legacyIsbnRequested = isbn;
+		if (!isbn) {
+			this.isbn = null;
+		}
 		return this;
 	}
 
@@ -167,16 +235,33 @@ public class DefaultFetchEbookMetadataInvocationRequest extends AbstractInvocati
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean isTitle() {
+	public String getTitle() {
 		return title;
+	}
+
+	@Override
+	public InvocationRequest setTitle(String title) {
+		this.title = title;
+		this.legacyTitleRequested = false;
+		return this;
+	}
+
+	@Deprecated
+	@Override
+	public boolean isTitle() {
+		return legacyTitleRequested || StringUtils.isNotBlank(title);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	@Deprecated
 	@Override
 	public InvocationRequest setTitle(boolean title) {
-		this.title = title;
+		this.legacyTitleRequested = title;
+		if (!title) {
+			this.title = null;
+		}
 		return this;
 	}
 

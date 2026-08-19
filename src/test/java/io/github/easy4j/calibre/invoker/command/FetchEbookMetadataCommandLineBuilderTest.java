@@ -75,19 +75,12 @@ public class FetchEbookMetadataCommandLineBuilderTest {
     public void shouldSetAuthors() {
         FetchEbookMetadataCommandLineBuilder builder = new FetchEbookMetadataCommandLineBuilder();
         DefaultFetchEbookMetadataInvocationRequest request = new DefaultFetchEbookMetadataInvocationRequest();
-        request.setAuthors(true);
+        request.setAuthors("Eric Evans");
 
         Commandline cli = new Commandline();
         builder.setAuthors(request, cli);
 
-        boolean found = false;
-        for (String arg : cli.getArguments()) {
-            if ("--authors".equals(arg)) {
-                found = true;
-                break;
-            }
-        }
-        assertTrue(found);
+        assertArrayEquals(new String[] {"--authors", "Eric Evans"}, cli.getArguments());
     }
 
     @Test
@@ -135,19 +128,12 @@ public class FetchEbookMetadataCommandLineBuilderTest {
     public void shouldSetIsbn() {
         FetchEbookMetadataCommandLineBuilder builder = new FetchEbookMetadataCommandLineBuilder();
         DefaultFetchEbookMetadataInvocationRequest request = new DefaultFetchEbookMetadataInvocationRequest();
-        request.setIsbn(true);
+        request.setIsbn("9780321125217");
 
         Commandline cli = new Commandline();
         builder.setIsbn(request, cli);
 
-        boolean found = false;
-        for (String arg : cli.getArguments()) {
-            if ("--isbn".equals(arg)) {
-                found = true;
-                break;
-            }
-        }
-        assertTrue(found);
+        assertArrayEquals(new String[] {"--isbn", "9780321125217"}, cli.getArguments());
     }
 
     @Test
@@ -208,29 +194,96 @@ public class FetchEbookMetadataCommandLineBuilderTest {
     public void shouldSetTitle() {
         FetchEbookMetadataCommandLineBuilder builder = new FetchEbookMetadataCommandLineBuilder();
         DefaultFetchEbookMetadataInvocationRequest request = new DefaultFetchEbookMetadataInvocationRequest();
-        request.setAuthors(true); // setTitle checks isAuthors (bug in original code)
+        request.setTitle("Domain-Driven Design");
 
         Commandline cli = new Commandline();
         builder.setTitle(request, cli);
 
-        boolean found = false;
-        for (String arg : cli.getArguments()) {
-            if ("--title".equals(arg)) {
-                found = true;
-                break;
-            }
-        }
-        assertTrue(found);
+        assertArrayEquals(new String[] {"--title", "Domain-Driven Design"}, cli.getArguments());
     }
 
     @Test
-    public void shouldNotDoCommandInternalForWrongRequestType() throws CommandLineConfigurationException {
+    public void shouldRejectWrongRequestType() {
         FetchEbookMetadataCommandLineBuilder builder = new FetchEbookMetadataCommandLineBuilder();
         DefaultWeb2diskInvocationRequest request = new DefaultWeb2diskInvocationRequest();
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> builder.doCommandInternal(request, new Commandline()));
+        assertTrue(exception.getMessage().contains("FetchEbookMetadataInvocationRequest"));
+    }
+
+    @Test
+    public void shouldEmitExactMetadataTokenOrder() throws Exception {
+        FetchEbookMetadataCommandLineBuilder builder = new FetchEbookMetadataCommandLineBuilder();
+        DefaultFetchEbookMetadataInvocationRequest request = new DefaultFetchEbookMetadataInvocationRequest();
+        File cover = new File("target/cover files/domain driven design.jpg");
+        request.setAllowedPlugins(java.util.Arrays.asList("Google", "Open Library"));
+        request.setAuthors("Eric Evans");
+        request.setCoverFile(cover);
+        request.setIsbn("9780321125217");
+        request.setOpf(true);
+        request.setTimeout(30);
+        request.setTitle("Domain-Driven Design");
 
         Commandline cli = new Commandline();
         builder.doCommandInternal(request, cli);
 
-        // Should not throw, just no-op
+        assertArrayEquals(new String[] {
+                "--allowed-plugin", "Google",
+                "--allowed-plugin", "Open Library",
+                "--authors", "Eric Evans",
+                "--cover", cover.getCanonicalPath(),
+                "--isbn", "9780321125217",
+                "--opf",
+                "--timeout", "30",
+                "--title", "Domain-Driven Design"
+        }, cli.getArguments());
+    }
+
+    @Test
+    public void shouldAllowNullCoverWithoutThrowing() throws Exception {
+        DefaultFetchEbookMetadataInvocationRequest request = new DefaultFetchEbookMetadataInvocationRequest();
+        request.setTitle("Domain-Driven Design");
+
+        Commandline cli = new Commandline();
+        new FetchEbookMetadataCommandLineBuilder().doCommandInternal(request, cli);
+
+        assertArrayEquals(new String[] {
+                "--timeout", "30", "--title", "Domain-Driven Design"
+        }, cli.getArguments());
+    }
+
+    @Test
+    public void shouldRequireAtLeastOneTypedLookupValue() {
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> new FetchEbookMetadataCommandLineBuilder().doCommandInternal(
+                        new DefaultFetchEbookMetadataInvocationRequest(), new Commandline()));
+        assertTrue(exception.getMessage().contains("title, authors or ISBN"));
+    }
+
+    @Test
+    public void shouldRequirePositiveTimeout() {
+        DefaultFetchEbookMetadataInvocationRequest request = new DefaultFetchEbookMetadataInvocationRequest();
+        request.setTitle("Domain-Driven Design");
+        request.setTimeout(0);
+
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> new FetchEbookMetadataCommandLineBuilder().doCommandInternal(
+                        request, new Commandline()));
+        assertTrue(exception.getMessage().contains("timeout"));
+    }
+
+    @Test
+    public void legacyTrueWithoutAuthorsValueFailsByFieldName() {
+        DefaultFetchEbookMetadataInvocationRequest request = new DefaultFetchEbookMetadataInvocationRequest();
+        request.setAuthors(true);
+
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> new FetchEbookMetadataCommandLineBuilder().doCommandInternal(
+                        request, new Commandline()));
+        assertTrue(exception.getMessage().contains("authors"));
     }
 }

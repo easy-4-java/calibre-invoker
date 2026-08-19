@@ -17,9 +17,9 @@ package io.github.easy4j.calibre.invoker.command;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.Commandline;
 
 import io.github.easy4j.calibre.invoker.exception.CommandLineConfigurationException;
@@ -42,67 +42,54 @@ public class Web2diskCommandLineBuilder extends AbstractCommandLineBuilder {
 	protected void doCommandInternal(InvocationRequest request, Commandline cli)
 			throws CommandLineConfigurationException {
 		
-		if(request instanceof Web2diskInvocationRequest) {
-
-			Web2diskInvocationRequest web2diskRequest = ( Web2diskInvocationRequest) request;
-			
-			setBaseDirectory(web2diskRequest, cli);
-			setDelay(web2diskRequest, cli);
-			setDontDownloadStylesheets(web2diskRequest, cli);
-			setEncoding(web2diskRequest, cli);
-			setFilterRegexp(web2diskRequest, cli);
-			setMatchRegexp(web2diskRequest, cli);
-			setMaxFiles(web2diskRequest, cli);
-			setMaxRecursions(web2diskRequest, cli);
-			setTimeout(web2diskRequest, cli);
-			// Where URL is for example https://google.com
-			cli.createArg().setValue(web2diskRequest.getURL());
-			
+		if (!(request instanceof Web2diskInvocationRequest)) {
+			throw new CommandLineConfigurationException(
+					"Request must implement Web2diskInvocationRequest.");
 		}
-		
+
+		Web2diskInvocationRequest web2diskRequest = (Web2diskInvocationRequest) request;
+		validate(web2diskRequest);
+		setBaseDirectory(web2diskRequest, cli);
+		setDelay(web2diskRequest, cli);
+		setDontDownloadStylesheets(web2diskRequest, cli);
+		setEncoding(web2diskRequest, cli);
+		setFilterRegexp(web2diskRequest, cli);
+		setMatchRegexp(web2diskRequest, cli);
+		setMaxFiles(web2diskRequest, cli);
+		setMaxRecursions(web2diskRequest, cli);
+		setTimeout(web2diskRequest, cli);
+		cli.createArg().setValue(web2diskRequest.getURL());
 	}
 
 	@Override
 	protected File findCalibreExecutable() throws CommandLineConfigurationException, IOException {
-		
-		if (calibreHome == null) {
-			findCalibreHome();
+		if (Objects.nonNull(calibreExecutable) && calibreExecutable.isAbsolute()) {
+			return calibreExecutable;
 		}
-
-		logger.debug("Using ${calibre.home} of: \'" + calibreHome + "\'.");
-
-		if (calibreExecutable == null || !calibreExecutable.isAbsolute()) {
-			String executable;
-			if (calibreExecutable != null) {
-				executable = calibreExecutable.getPath();
-			} else if (Os.isFamily("windows")) {
-				executable = "web2disk.exe";
-			} else {
-				executable = "web2disk";
-			}
-
-			calibreExecutable = new File(calibreHome, executable);
-
-			try {
-				File canonicalMvn = calibreExecutable.getCanonicalFile();
-				calibreExecutable = canonicalMvn;
-			} catch (IOException e) {
-				logger.debug("Failed to canonicalize maven executable: " + calibreExecutable + ". Using as-is.", e);
-			}
-
-			if (!calibreExecutable.isFile()) {
-				throw new CommandLineConfigurationException("Calibre executable not found at: " + calibreExecutable);
-			}
-		}
-
-		return calibreExecutable;
+		return resolveCalibreExecutable("web2disk", null);
 	}
-	
+
+	private void validate(Web2diskInvocationRequest request)
+			throws CommandLineConfigurationException {
+		if (StringUtils.isBlank(request.getURL())) {
+			throw new CommandLineConfigurationException("Web2disk URL must not be blank.");
+		}
+		if (request.getDelay() < 0) {
+			throw new CommandLineConfigurationException("Web2disk delay must not be negative.");
+		}
+		if (request.getMaxRecursions() < 0) {
+			throw new CommandLineConfigurationException(
+					"Web2disk maxRecursions must not be negative.");
+		}
+		if (request.getTimeout() < 0) {
+			throw new CommandLineConfigurationException("Web2disk timeout must not be negative.");
+		}
+	}
 
 	protected void setBaseDirectory(Web2diskInvocationRequest request, Commandline cli) {
 		
 		File baseDirectory = request.getBaseDirectory();
-		if (baseDirectory != null) {
+		if (Objects.nonNull(baseDirectory)) {
 			try {
 				File canSet = baseDirectory.getCanonicalFile();
 				baseDirectory = canSet;

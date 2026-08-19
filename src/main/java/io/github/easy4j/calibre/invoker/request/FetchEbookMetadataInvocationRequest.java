@@ -16,6 +16,7 @@
 package io.github.easy4j.calibre.invoker.request;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * Specifies the parameters used to control a Calibre {@code fetch-ebook-metadata} invocation.
@@ -42,11 +43,24 @@ public interface FetchEbookMetadataInvocationRequest extends InvocationRequest {
 	 */
 	public String getAllowedPlugin();
 
+	/** Returns the ordered metadata download plugin names. */
+	List<String> getAllowedPlugins();
+
+	/** Returns the book authors, or {@code null} when not set. */
+	String getAuthors();
+
+	/** Returns the book ISBN, or {@code null} when not set. */
+	String getIsbn();
+
+	/** Returns the book title, or {@code null} when not set. */
+	String getTitle();
+
 	/**
 	 * Returns whether the authors parameter is specified.
 	 *
 	 * @return {@code true} if authors mode is enabled, {@code false} otherwise.
 	 */
+	@Deprecated
 	boolean isAuthors();
 
 	/**
@@ -54,6 +68,7 @@ public interface FetchEbookMetadataInvocationRequest extends InvocationRequest {
 	 *
 	 * @return {@code true} if ISBN mode is enabled, {@code false} otherwise.
 	 */
+	@Deprecated
 	boolean isIsbn();
 
 	/**
@@ -68,6 +83,7 @@ public interface FetchEbookMetadataInvocationRequest extends InvocationRequest {
 	 *
 	 * @return {@code true} if title mode is enabled, {@code false} otherwise.
 	 */
+	@Deprecated
 	boolean isTitle();
 
 	/**
@@ -83,16 +99,30 @@ public interface FetchEbookMetadataInvocationRequest extends InvocationRequest {
 	 */
 	InvocationRequest setAllowedPlugin(String allowedPlugin);
 
+	/** Replaces the ordered metadata plugin selection. */
+	InvocationRequest setAllowedPlugins(List<String> allowedPlugins);
+
+	/** Adds one metadata plugin to the ordered selection. */
+	InvocationRequest addAllowedPlugin(String allowedPlugin);
+
+	/** Sets the book authors supplied to Calibre. */
+	InvocationRequest setAuthors(String authors);
+
 	/**
 	 * Set the value of the {@code --authors, -a} {@code true} if the argument
 	 * {@code --authors, -a} was specified, otherwise {@code false}
 	 */
+	@Deprecated
 	InvocationRequest setAuthors(boolean authors);
+
+	/** Sets the book ISBN supplied to Calibre. */
+	InvocationRequest setIsbn(String isbn);
 
 	/**
 	 * Set the value of the {@code  --isbn, -i} {@code true} if the argument
 	 * {@code  --isbn, -i} was specified, otherwise {@code false}
 	 */
+	@Deprecated
 	InvocationRequest setIsbn(boolean isbn);
 
 	/**
@@ -112,10 +142,14 @@ public interface FetchEbookMetadataInvocationRequest extends InvocationRequest {
 	 */
 	InvocationRequest setTimeout(long timeout);
 
+	/** Sets the book title supplied to Calibre. */
+	InvocationRequest setTitle(String title);
+
 	/**
 	 * Set the value of the {@code  --title, -t} {@code true} if the argument
 	 * {@code --title, -t} was specified, otherwise {@code false}
 	 */
+	@Deprecated
 	InvocationRequest setTitle(boolean title);
 
 }

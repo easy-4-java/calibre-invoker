@@ -166,7 +166,7 @@ public class DefaultWeb2diskInvocationRequest extends AbstractInvocationRequest 
 	@Override
 	public InvocationRequest setDelay(int delay) {
 		this.delay = delay;
-		return null;
+		return this;
 	}
 
 	/**

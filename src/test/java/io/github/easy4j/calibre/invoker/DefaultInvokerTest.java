@@ -37,6 +37,7 @@ import io.github.easy4j.calibre.invoker.command.CommandLineBuilderRegistry;
 import io.github.easy4j.calibre.invoker.command.Web2diskCommandLineBuilder;
 import io.github.easy4j.calibre.invoker.exception.CalibreInvocationException;
 import io.github.easy4j.calibre.invoker.request.DefaultEbookConvertInvocationRequest;
+import io.github.easy4j.calibre.invoker.request.DefaultFetchEbookMetadataInvocationRequest;
 import io.github.easy4j.calibre.invoker.request.DefaultWeb2diskInvocationRequest;
 import io.github.easy4j.calibre.invoker.support.RecordingProcessExecutor;
 
@@ -190,6 +191,22 @@ public class DefaultInvokerTest {
     }
 
     @Test
+    public void fetchMetadataRoutesThroughRegistryToInjectedProcessExecutor() throws Exception {
+        RecordingProcessExecutor executor = new RecordingProcessExecutor(0);
+        DefaultInvoker invoker = new DefaultInvoker(executor);
+        invoker.setCalibreHome(createFakeCalibreHome(
+                "metadata-calibre-home", fetchMetadataExecutableName()));
+        DefaultFetchEbookMetadataInvocationRequest request =
+                new DefaultFetchEbookMetadataInvocationRequest();
+        request.setTitle("Domain-Driven Design");
+
+        InvocationResult result = invoker.execute(request);
+
+        assertEquals(0, result.getExitCode());
+        assertEquals(fetchMetadataExecutableName(), executor.getExecutableName());
+    }
+
+    @Test
     public void requestCalibreHomeOverridesInvokerHome() throws Exception {
         File invokerHome = createFakeCalibreHome("invoker-home");
         File requestHome = createFakeCalibreHome("request-home");
@@ -294,8 +311,12 @@ public class DefaultInvokerTest {
     }
 
     private File createFakeCalibreHome(String folderName) throws IOException {
+        return createFakeCalibreHome(folderName, web2diskExecutableName());
+    }
+
+    private File createFakeCalibreHome(String folderName, String executableName) throws IOException {
         File calibreHome = temporaryFolder.newFolder(folderName);
-        File executable = new File(calibreHome, web2diskExecutableName());
+        File executable = new File(calibreHome, executableName);
         assertTrue(executable.createNewFile());
         assertTrue(executable.setExecutable(true) || Os.isFamily("windows"));
         return calibreHome;
@@ -303,6 +324,10 @@ public class DefaultInvokerTest {
 
     private String web2diskExecutableName() {
         return Os.isFamily("windows") ? "web2disk.exe" : "web2disk";
+    }
+
+    private String fetchMetadataExecutableName() {
+        return Os.isFamily("windows") ? "fetch-ebook-metadata.exe" : "fetch-ebook-metadata";
     }
 
     private DefaultWeb2diskInvocationRequest validWeb2diskRequest() {

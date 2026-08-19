@@ -78,9 +78,9 @@ public class DefaultWeb2diskInvocationRequestTest {
     @Test
     public void shouldSetDelay() {
         DefaultWeb2diskInvocationRequest request = new DefaultWeb2diskInvocationRequest();
-        // Note: setDelay returns null (bug in original code), so we just test it doesn't throw
-        request.setDelay(5);
+        InvocationRequest result = request.setDelay(5);
         assertEquals(5, request.getDelay());
+        assertSame(request, result);
     }
 
     @Test

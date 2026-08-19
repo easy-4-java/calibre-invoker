@@ -20,14 +20,21 @@ import static org.junit.Assert.*;
 import java.io.File;
 
 import org.codehaus.plexus.util.cli.Commandline;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import io.github.easy4j.calibre.invoker.exception.CommandLineConfigurationException;
+import io.github.easy4j.calibre.invoker.request.DefaultFetchEbookMetadataInvocationRequest;
 import io.github.easy4j.calibre.invoker.request.DefaultWeb2diskInvocationRequest;
 
 /**
  * Tests for {@link Web2diskCommandLineBuilder}.
  */
 public class Web2diskCommandLineBuilderTest {
+
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
     public void shouldExtendAbstractCommandLineBuilder() {
@@ -336,13 +343,93 @@ public class Web2diskCommandLineBuilderTest {
     }
 
     @Test
-    public void shouldNotDoCommandInternalForNonWeb2diskRequest() throws io.github.easy4j.calibre.invoker.exception.CommandLineConfigurationException {
+    public void shouldRejectNonWeb2diskRequest() {
+        Web2diskCommandLineBuilder builder = new Web2diskCommandLineBuilder();
+        Commandline cli = new Commandline();
+
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> builder.doCommandInternal(
+                        new DefaultFetchEbookMetadataInvocationRequest(), cli));
+
+        assertTrue(exception.getMessage().contains("Web2diskInvocationRequest"));
+    }
+
+    @Test
+    public void shouldEmitExactTokenOrderAndKeepSpacedPathInOneToken() throws Exception {
         Web2diskCommandLineBuilder builder = new Web2diskCommandLineBuilder();
         DefaultWeb2diskInvocationRequest request = new DefaultWeb2diskInvocationRequest();
-        request.setURL("https://example.com");
+        File baseDirectory = temporaryFolder.newFolder("base directory");
+        request.setBaseDirectory(baseDirectory);
+        request.setDelay(2);
+        request.setDontDownloadStylesheets(true);
+        request.setEncoding("UTF-8");
+        request.setFilterRegexp("skip.*");
+        request.setMatchRegexp("keep.*");
+        request.setMaxFiles(10);
+        request.setMaxRecursions(3);
+        request.setTimeout(20);
+        request.setURL("https://example.com/books");
 
         Commandline cli = new Commandline();
-        // This should work since request IS a Web2diskInvocationRequest
         builder.doCommandInternal(request, cli);
+
+        assertArrayEquals(new String[] {
+                "-d", baseDirectory.getCanonicalPath(),
+                "--delay", "2",
+                "--dont-download-stylesheets",
+                "--encoding", "UTF-8",
+                "--filter-regexp", "skip.*",
+                "--match-regexp", "keep.*",
+                "-n", "10",
+                "-r", "3",
+                "-t", "20",
+                "https://example.com/books"
+        }, cli.getArguments());
+        assertEquals(baseDirectory.getCanonicalPath(), cli.getArguments()[1]);
+    }
+
+    @Test
+    public void shouldRequireUrl() {
+        Web2diskCommandLineBuilder builder = new Web2diskCommandLineBuilder();
+        DefaultWeb2diskInvocationRequest request = new DefaultWeb2diskInvocationRequest();
+
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> builder.doCommandInternal(request, new Commandline()));
+
+        assertTrue(exception.getMessage().contains("URL"));
+    }
+
+    @Test
+    public void shouldRejectNegativeDelay() {
+        assertInvalidNumber("delay", requestWithValues(-1, 1, 10));
+    }
+
+    @Test
+    public void shouldRejectNegativeMaxRecursions() {
+        assertInvalidNumber("maxRecursions", requestWithValues(0, -1, 10));
+    }
+
+    @Test
+    public void shouldRejectNegativeTimeout() {
+        assertInvalidNumber("timeout", requestWithValues(0, 1, -1));
+    }
+
+    private DefaultWeb2diskInvocationRequest requestWithValues(int delay, int maxRecursions,
+            long timeout) {
+        DefaultWeb2diskInvocationRequest request = new DefaultWeb2diskInvocationRequest();
+        request.setURL("https://example.com");
+        request.setDelay(delay);
+        request.setMaxRecursions(maxRecursions);
+        request.setTimeout(timeout);
+        return request;
+    }
+
+    private void assertInvalidNumber(String field, DefaultWeb2diskInvocationRequest request) {
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> new Web2diskCommandLineBuilder().doCommandInternal(request, new Commandline()));
+        assertTrue(exception.getMessage().contains(field));
     }
 }

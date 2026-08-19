@@ -17,13 +17,12 @@ package io.github.easy4j.calibre.invoker.command;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.Commandline;
 
 import io.github.easy4j.calibre.invoker.exception.CommandLineConfigurationException;
-import io.github.easy4j.calibre.invoker.request.DefaultFetchEbookMetadataInvocationRequest;
 import io.github.easy4j.calibre.invoker.request.FetchEbookMetadataInvocationRequest;
 import io.github.easy4j.calibre.invoker.request.InvocationRequest;
 
@@ -43,73 +42,83 @@ public class FetchEbookMetadataCommandLineBuilder extends AbstractCommandLineBui
 	protected void doCommandInternal(InvocationRequest request, Commandline cli)
 			throws CommandLineConfigurationException {
 		
-		if(request instanceof FetchEbookMetadataInvocationRequest) {
-
-			DefaultFetchEbookMetadataInvocationRequest fetchRequest = ( DefaultFetchEbookMetadataInvocationRequest) request;
-			
-			setAllowedPlugin(fetchRequest, cli);
-			setAuthors(fetchRequest, cli);
-			// LRF file path. file.lrf
-			cli.createArg().setValue(fetchRequest.getCoverFile().getAbsolutePath());
-			
+		if (!(request instanceof FetchEbookMetadataInvocationRequest)) {
+			throw new CommandLineConfigurationException(
+					"Request must implement FetchEbookMetadataInvocationRequest.");
 		}
-		
+
+		FetchEbookMetadataInvocationRequest fetchRequest =
+				(FetchEbookMetadataInvocationRequest) request;
+		validate(fetchRequest);
+		setAllowedPlugins(fetchRequest, cli);
+		setAuthors(fetchRequest, cli);
+		setCoverFile(fetchRequest, cli);
+		setIsbn(fetchRequest, cli);
+		setOpf(fetchRequest, cli);
+		setTimeout(fetchRequest, cli);
+		setTitle(fetchRequest, cli);
 	}
 
 	@Override
 	protected File findCalibreExecutable() throws CommandLineConfigurationException, IOException {
-		
-		if (calibreHome == null) {
-			findCalibreHome();
+		if (Objects.nonNull(calibreExecutable) && calibreExecutable.isAbsolute()) {
+			return calibreExecutable;
 		}
-
-		logger.debug("Using ${calibre.home} of: \'" + calibreHome + "\'.");
-
-		if (calibreExecutable == null || !calibreExecutable.isAbsolute()) {
-			String executable;
-			if (calibreExecutable != null) {
-				executable = calibreExecutable.getPath();
-			} else if (Os.isFamily("windows")) {
-				executable = "fetch-ebook-metadata.exe";
-			} else {
-				executable = "fetch-ebook-metadata";
-			}
-
-			calibreExecutable = new File(calibreHome, executable);
-
-			try {
-				File canonicalMvn = calibreExecutable.getCanonicalFile();
-				calibreExecutable = canonicalMvn;
-			} catch (IOException e) {
-				logger.debug("Failed to canonicalize maven executable: " + calibreExecutable + ". Using as-is.", e);
-			}
-
-			if (!calibreExecutable.isFile()) {
-				throw new CommandLineConfigurationException("Calibre executable not found at: " + calibreExecutable);
-			}
-		}
-
-		return calibreExecutable;
+		return resolveCalibreExecutable("fetch-ebook-metadata", null);
 	}
-	
 
-	protected void setAllowedPlugin(DefaultFetchEbookMetadataInvocationRequest request, Commandline cli) {
-		if(StringUtils.isNotEmpty(request.getAllowedPlugin())) {
-			cli.createArg().setValue("--allowed-plugin");
-			cli.createArg().setValue(request.getAllowedPlugin());
+	private void validate(FetchEbookMetadataInvocationRequest request)
+			throws CommandLineConfigurationException {
+		if (request.isAuthors() && StringUtils.isBlank(request.getAuthors())) {
+			throw new CommandLineConfigurationException(
+					"Fetch metadata authors requires a string value.");
+		}
+		if (request.isIsbn() && StringUtils.isBlank(request.getIsbn())) {
+			throw new CommandLineConfigurationException(
+					"Fetch metadata ISBN requires a string value.");
+		}
+		if (request.isTitle() && StringUtils.isBlank(request.getTitle())) {
+			throw new CommandLineConfigurationException(
+					"Fetch metadata title requires a string value.");
+		}
+		if (StringUtils.isBlank(request.getAuthors())
+				&& StringUtils.isBlank(request.getIsbn())
+				&& StringUtils.isBlank(request.getTitle())) {
+			throw new CommandLineConfigurationException(
+					"Fetch metadata requires at least one of title, authors or ISBN.");
+		}
+		if (request.getTimeout() <= 0) {
+			throw new CommandLineConfigurationException(
+					"Fetch metadata timeout must be positive.");
 		}
 	}
-	
-	protected void setAuthors(DefaultFetchEbookMetadataInvocationRequest request, Commandline cli) {
-		if(request.isAuthors()) {
+
+	protected void setAllowedPlugins(FetchEbookMetadataInvocationRequest request,
+			Commandline cli) {
+		for (String allowedPlugin : request.getAllowedPlugins()) {
+			if (StringUtils.isNotBlank(allowedPlugin)) {
+				cli.createArg().setValue("--allowed-plugin");
+				cli.createArg().setValue(allowedPlugin);
+			}
+		}
+	}
+
+	protected void setAllowedPlugin(FetchEbookMetadataInvocationRequest request,
+			Commandline cli) {
+		setAllowedPlugins(request, cli);
+	}
+
+	protected void setAuthors(FetchEbookMetadataInvocationRequest request, Commandline cli) {
+		if (StringUtils.isNotBlank(request.getAuthors())) {
 			cli.createArg().setValue("--authors");
+			cli.createArg().setValue(request.getAuthors());
 		}
 	}
-	
-	protected void setCoverFile(DefaultFetchEbookMetadataInvocationRequest request, Commandline cli) {
+
+	protected void setCoverFile(FetchEbookMetadataInvocationRequest request, Commandline cli) {
 		
 		File coverFile = request.getCoverFile();
-		if (coverFile != null) {
+		if (Objects.nonNull(coverFile)) {
 			try {
 				File canSet = coverFile.getCanonicalFile();
 				coverFile = canSet;
@@ -124,19 +133,20 @@ public class FetchEbookMetadataCommandLineBuilder extends AbstractCommandLineBui
 		
 	}
 	
-	protected void setIsbn(DefaultFetchEbookMetadataInvocationRequest request, Commandline cli) {
-		if(request.isIsbn()) {
+	protected void setIsbn(FetchEbookMetadataInvocationRequest request, Commandline cli) {
+		if (StringUtils.isNotBlank(request.getIsbn())) {
 			cli.createArg().setValue("--isbn");
+			cli.createArg().setValue(request.getIsbn());
 		}
 	}
 
-	protected void setOpf(DefaultFetchEbookMetadataInvocationRequest request, Commandline cli) {
+	protected void setOpf(FetchEbookMetadataInvocationRequest request, Commandline cli) {
 		if(request.isOpf()) {
 			cli.createArg().setValue("--opf");
 		}
 	}
 	
-	protected void setTimeout(DefaultFetchEbookMetadataInvocationRequest request, Commandline cli) {
+	protected void setTimeout(FetchEbookMetadataInvocationRequest request, Commandline cli) {
 		long timeout = request.getTimeout();
 		if (timeout > 0) {
 			cli.createArg().setValue("--timeout");
@@ -144,9 +154,10 @@ public class FetchEbookMetadataCommandLineBuilder extends AbstractCommandLineBui
 		}
 	}
 	
-	protected void setTitle(DefaultFetchEbookMetadataInvocationRequest request, Commandline cli) {
-		if(request.isAuthors()) {
+	protected void setTitle(FetchEbookMetadataInvocationRequest request, Commandline cli) {
+		if (StringUtils.isNotBlank(request.getTitle())) {
 			cli.createArg().setValue("--title");
+			cli.createArg().setValue(request.getTitle());
 		}
 	}
 

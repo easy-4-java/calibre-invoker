@@ -18,6 +18,9 @@ package io.github.easy4j.calibre.invoker.request;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -56,7 +59,8 @@ public class DefaultFetchEbookMetadataInvocationRequestTest {
     @Test
     public void shouldSetAndGetAuthors() {
         DefaultFetchEbookMetadataInvocationRequest request = new DefaultFetchEbookMetadataInvocationRequest();
-        InvocationRequest result = request.setAuthors(true);
+        InvocationRequest result = request.setAuthors("Eric Evans");
+        assertEquals("Eric Evans", request.getAuthors());
         assertTrue(request.isAuthors());
         assertSame(request, result);
     }
@@ -85,7 +89,8 @@ public class DefaultFetchEbookMetadataInvocationRequestTest {
     @Test
     public void shouldSetAndGetIsbn() {
         DefaultFetchEbookMetadataInvocationRequest request = new DefaultFetchEbookMetadataInvocationRequest();
-        InvocationRequest result = request.setIsbn(true);
+        InvocationRequest result = request.setIsbn("9780321125217");
+        assertEquals("9780321125217", request.getIsbn());
         assertTrue(request.isIsbn());
         assertSame(request, result);
     }
@@ -127,8 +132,69 @@ public class DefaultFetchEbookMetadataInvocationRequestTest {
     @Test
     public void shouldSetAndGetTitle() {
         DefaultFetchEbookMetadataInvocationRequest request = new DefaultFetchEbookMetadataInvocationRequest();
-        InvocationRequest result = request.setTitle(true);
+        InvocationRequest result = request.setTitle("Domain-Driven Design");
+        assertEquals("Domain-Driven Design", request.getTitle());
         assertTrue(request.isTitle());
         assertSame(request, result);
+    }
+
+    @Test
+    public void allowedPluginsAreRepeatableAndDefensive() {
+        DefaultFetchEbookMetadataInvocationRequest request = new DefaultFetchEbookMetadataInvocationRequest();
+        List<String> plugins = new ArrayList<>(Arrays.asList("Google", "Open Library"));
+
+        assertSame(request, request.setAllowedPlugins(plugins));
+        plugins.add("Amazon.com");
+        assertEquals(Arrays.asList("Google", "Open Library"), request.getAllowedPlugins());
+        assertThrows(UnsupportedOperationException.class,
+                () -> request.getAllowedPlugins().add("Amazon.com"));
+    }
+
+    @Test
+    public void legacyFalseSettersClearTypedValuesWithoutInventingBooleanStrings() {
+        DefaultFetchEbookMetadataInvocationRequest request = new DefaultFetchEbookMetadataInvocationRequest();
+        request.setAuthors("Eric Evans");
+        request.setIsbn("9780321125217");
+        request.setTitle("Domain-Driven Design");
+
+        request.setAuthors(false);
+        request.setIsbn(false);
+        request.setTitle(false);
+
+        assertNull(request.getAuthors());
+        assertNull(request.getIsbn());
+        assertNull(request.getTitle());
+    }
+
+    @Test
+    public void legacyTrueSettersDoNotInventTypedValues() {
+        DefaultFetchEbookMetadataInvocationRequest request = new DefaultFetchEbookMetadataInvocationRequest();
+
+        request.setAuthors(true);
+        request.setIsbn(true);
+        request.setTitle(true);
+
+        assertNull(request.getAuthors());
+        assertNull(request.getIsbn());
+        assertNull(request.getTitle());
+        assertTrue(request.isAuthors());
+        assertTrue(request.isIsbn());
+        assertTrue(request.isTitle());
+    }
+
+    @Test
+    public void legacyBooleanMetadataMethodsRemainDeprecated() throws Exception {
+        assertTrue(FetchEbookMetadataInvocationRequest.class.getMethod("isAuthors")
+                .isAnnotationPresent(Deprecated.class));
+        assertTrue(FetchEbookMetadataInvocationRequest.class.getMethod("setAuthors", boolean.class)
+                .isAnnotationPresent(Deprecated.class));
+        assertTrue(FetchEbookMetadataInvocationRequest.class.getMethod("isIsbn")
+                .isAnnotationPresent(Deprecated.class));
+        assertTrue(FetchEbookMetadataInvocationRequest.class.getMethod("setIsbn", boolean.class)
+                .isAnnotationPresent(Deprecated.class));
+        assertTrue(FetchEbookMetadataInvocationRequest.class.getMethod("isTitle")
+                .isAnnotationPresent(Deprecated.class));
+        assertTrue(FetchEbookMetadataInvocationRequest.class.getMethod("setTitle", boolean.class)
+                .isAnnotationPresent(Deprecated.class));
     }
 }
