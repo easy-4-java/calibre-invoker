@@ -39,6 +39,15 @@ public class PublicApiBaselineTest
     private static final String INVOCATION_OUTPUT_HANDLER =
             "io.github.easy4j.calibre.invoker.InvocationOutputHandler";
 
+    private static final String INVOCATION_REQUEST =
+            "io.github.easy4j.calibre.invoker.request.InvocationRequest";
+
+    private static final Map<String, Set<String>> BASELINE_INTERFACE_PARENTS_BY_OWNER =
+            baselineInterfaceParentsByOwner();
+
+    private static final Map<String, Set<String>> BASELINE_EXTERNAL_ABSTRACT_METHODS_BY_OWNER =
+            baselineExternalAbstractMethodsByOwner();
+
     @Test
     public void publicTypesMatchBaseline() throws Exception
     {
@@ -59,15 +68,15 @@ public class PublicApiBaselineTest
         List<String> baseline = Files.readAllLines(
                 Paths.get( "src/test/resources/api/calibre-invoker-2.0-public-types.txt" ),
                 StandardCharsets.UTF_8 );
-        List<String> effectiveBaseline = new ArrayList<>( baseline );
-        // 基线文件只记录声明方法，因此显式补回来自外部父接口的既有契约。
-        effectiveBaseline.add( "METHOD " + INVOCATION_OUTPUT_HANDLER + "#consumeLine(String):void" );
         Map<String, Set<String>> approvedAdditionsByOwner = new HashMap<>();
         approvedAdditionsByOwner.put( FETCH_EBOOK_METADATA_REQUEST,
                 APPROVED_ADDITIVE_ABSTRACT_METHOD_SIGNATURES );
 
         assertEquals( Collections.emptyList(), PublicApiScanner.findUnapprovedAbstractInterfaceMethods(
-                "io.github.easy4j.calibre.invoker", effectiveBaseline, approvedAdditionsByOwner ) );
+                "io.github.easy4j.calibre.invoker", baseline,
+                BASELINE_INTERFACE_PARENTS_BY_OWNER,
+                BASELINE_EXTERNAL_ABSTRACT_METHODS_BY_OWNER,
+                approvedAdditionsByOwner ) );
     }
 
     @Test
@@ -145,12 +154,34 @@ public class PublicApiBaselineTest
         Map<String, Set<String>> approvedMethodsByOwner =
                 PublicApiScanner.effectiveApprovedAbstractMethodsByOwner(
                         Arrays.asList( BaselineClassContract.class, ClassSignatureCollisionContract.class ),
-                        baseline, Collections.emptyMap() );
+                        baseline, Collections.emptyMap(), Collections.emptyMap(),
+                        Collections.emptyMap() );
 
         assertEquals( Collections.singletonList(
                 ClassSignatureCollisionContract.class.getName() + "#approved(String):void" ),
                 PublicApiScanner.findUnapprovedAbstractInterfaceMethods(
                         Arrays.asList( BaselineClassContract.class, ClassSignatureCollisionContract.class ),
+                        approvedMethodsByOwner ) );
+    }
+
+    @Test
+    public void currentEdgeBetweenBaselineInterfacesDoesNotRewriteHistory()
+    {
+        List<String> baseline = Arrays.asList(
+                "CLASS " + BaselineParentContract.class.getName(),
+                "METHOD " + BaselineParentContract.class.getName() + "#inheritedAddition():void",
+                "CLASS " + BaselineChildWithNewEdgeContract.class.getName(),
+                "METHOD " + BaselineChildWithNewEdgeContract.class.getName() + "#existing():void" );
+        Map<String, Set<String>> approvedMethodsByOwner =
+                PublicApiScanner.effectiveApprovedAbstractMethodsByOwner(
+                        Arrays.asList( BaselineParentContract.class, BaselineChildWithNewEdgeContract.class ),
+                        baseline, Collections.emptyMap(), Collections.emptyMap(),
+                        Collections.emptyMap() );
+
+        assertEquals( Collections.singletonList(
+                BaselineChildWithNewEdgeContract.class.getName() + "#inheritedAddition():void" ),
+                PublicApiScanner.findUnapprovedAbstractInterfaceMethods(
+                        Arrays.asList( BaselineParentContract.class, BaselineChildWithNewEdgeContract.class ),
                         approvedMethodsByOwner ) );
     }
 
@@ -166,6 +197,31 @@ public class PublicApiBaselineTest
     private Set<String> signatures( String... signatures )
     {
         return new HashSet<>( Arrays.asList( signatures ) );
+    }
+
+    private static Map<String, Set<String>> baselineInterfaceParentsByOwner()
+    {
+        // 固化自 c3053d5 基线；不得使用当前反射继承关系重建历史边。
+        Map<String, Set<String>> parentsByOwner = new HashMap<>();
+        parentsByOwner.put( FETCH_EBOOK_METADATA_REQUEST, Collections.singleton( INVOCATION_REQUEST ) );
+        parentsByOwner.put( "io.github.easy4j.calibre.invoker.request.Lrf2lrsInvocationRequest",
+                Collections.singleton( INVOCATION_REQUEST ) );
+        parentsByOwner.put( "io.github.easy4j.calibre.invoker.request.LrfviewerInvocationRequest",
+                Collections.singleton( INVOCATION_REQUEST ) );
+        parentsByOwner.put( "io.github.easy4j.calibre.invoker.request.Lrs2lrfInvocationRequest",
+                Collections.singleton( INVOCATION_REQUEST ) );
+        parentsByOwner.put( "io.github.easy4j.calibre.invoker.request.Web2diskInvocationRequest",
+                Collections.singleton( INVOCATION_REQUEST ) );
+        return Collections.unmodifiableMap( parentsByOwner );
+    }
+
+    private static Map<String, Set<String>> baselineExternalAbstractMethodsByOwner()
+    {
+        // owner#method 基线只记录声明方法，外部父接口的历史契约需单独固化。
+        Map<String, Set<String>> methodsByOwner = new HashMap<>();
+        methodsByOwner.put( INVOCATION_OUTPUT_HANDLER,
+                Collections.singleton( "consumeLine(String):void" ) );
+        return Collections.unmodifiableMap( methodsByOwner );
     }
 
     static final class PublicApiScanner
@@ -189,6 +245,8 @@ public class PublicApiBaselineTest
 
         static List<String> findUnapprovedAbstractInterfaceMethods( String packageName,
                 Iterable<String> baselineDescriptors,
+                Map<String, Set<String>> baselineParentsByOwner,
+                Map<String, Set<String>> baselineExternalMethodsByOwner,
                 Map<String, Set<String>> approvedAdditionsByOwner ) throws Exception
         {
             Path classesDirectory = Paths.get( Invoker.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
@@ -205,7 +263,8 @@ public class PublicApiBaselineTest
                         .forEach( publicTypes::add );
             }
             Map<String, Set<String>> approvedMethodsByOwner = effectiveApprovedAbstractMethodsByOwner(
-                    publicTypes, baselineDescriptors, approvedAdditionsByOwner );
+                    publicTypes, baselineDescriptors, baselineParentsByOwner,
+                    baselineExternalMethodsByOwner, approvedAdditionsByOwner );
             return findUnapprovedAbstractInterfaceMethods( publicTypes, approvedMethodsByOwner );
         }
 
@@ -240,6 +299,8 @@ public class PublicApiBaselineTest
 
         static Map<String, Set<String>> effectiveApprovedAbstractMethodsByOwner(
                 Iterable<Class<?>> publicTypes, Iterable<String> baselineDescriptors,
+                Map<String, Set<String>> baselineParentsByOwner,
+                Map<String, Set<String>> baselineExternalMethodsByOwner,
                 Map<String, Set<String>> approvedAdditionsByOwner )
         {
             Map<String, Class<?>> publicTypesByName = new HashMap<>();
@@ -267,6 +328,15 @@ public class PublicApiBaselineTest
                             .add( descriptor.substring( ownerEnd + 1 ) );
                 }
             }
+            for ( Map.Entry<String, Set<String>> entry : baselineExternalMethodsByOwner.entrySet() )
+            {
+                if ( baselineTypeNames.contains( entry.getKey() ) )
+                {
+                    declaredBaselineMethodsByInterface
+                            .computeIfAbsent( entry.getKey(), ignored -> new HashSet<>() )
+                            .addAll( entry.getValue() );
+                }
+            }
 
             Map<String, Set<String>> effectiveMethodsByOwner = new HashMap<>();
             for ( String baselineTypeName : baselineTypeNames )
@@ -277,19 +347,33 @@ public class PublicApiBaselineTest
                     continue;
                 }
                 Set<String> effectiveMethods = new HashSet<>();
-                for ( Map.Entry<String, Set<String>> entry : declaredBaselineMethodsByInterface.entrySet() )
-                {
-                    Class<?> declaringInterface = publicTypesByName.get( entry.getKey() );
-                    if ( declaringInterface.isAssignableFrom( baselineType ) )
-                    {
-                        effectiveMethods.addAll( entry.getValue() );
-                    }
-                }
+                collectHistoricalAbstractMethods( baselineTypeName,
+                        declaredBaselineMethodsByInterface, baselineParentsByOwner,
+                        effectiveMethods, new HashSet<>() );
                 effectiveMethods.addAll( approvedAdditionsByOwner.getOrDefault(
                         baselineTypeName, Collections.emptySet() ) );
                 effectiveMethodsByOwner.put( baselineTypeName, effectiveMethods );
             }
             return effectiveMethodsByOwner;
+        }
+
+        private static void collectHistoricalAbstractMethods( String interfaceName,
+                Map<String, Set<String>> declaredMethodsByInterface,
+                Map<String, Set<String>> baselineParentsByOwner,
+                Set<String> effectiveMethods, Set<String> visitedInterfaces )
+        {
+            if ( !visitedInterfaces.add( interfaceName ) )
+            {
+                return;
+            }
+            effectiveMethods.addAll( declaredMethodsByInterface.getOrDefault(
+                    interfaceName, Collections.emptySet() ) );
+            for ( String parentName : baselineParentsByOwner.getOrDefault(
+                    interfaceName, Collections.emptySet() ) )
+            {
+                collectHistoricalAbstractMethods( parentName, declaredMethodsByInterface,
+                        baselineParentsByOwner, effectiveMethods, visitedInterfaces );
+            }
         }
 
         static Set<String> classNames( Iterable<String> descriptors )
@@ -441,6 +525,16 @@ public class PublicApiBaselineTest
         void existing();
 
         void approved( String value );
+    }
+
+    public interface BaselineParentContract
+    {
+        void inheritedAddition();
+    }
+
+    public interface BaselineChildWithNewEdgeContract extends BaselineParentContract
+    {
+        void existing();
     }
 
 }
