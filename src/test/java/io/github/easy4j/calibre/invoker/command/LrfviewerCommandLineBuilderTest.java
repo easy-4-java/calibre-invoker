@@ -88,6 +88,22 @@ public class LrfviewerCommandLineBuilderTest {
     }
 
     @Test
+    public void honorsRelativeExecutableOverrideWithinCalibreHome() throws Exception {
+        File input = temporaryFolder.newFile("relative-executable-book.lrf");
+        File calibreHome = temporaryFolder.newFolder("relative-executable-calibre-home");
+        File executable = createExecutable(calibreHome, "custom-lrfviewer");
+        InterfaceOnlyRequest request = new InterfaceOnlyRequest();
+        request.setLrsFile(input);
+        LrfviewerCommandLineBuilder builder = new LrfviewerCommandLineBuilder();
+        builder.setCalibreHome(calibreHome);
+        builder.setCalibreExecutable(new File("custom-lrfviewer"));
+
+        Commandline cli = builder.build(request);
+
+        assertEquals(executable.getCanonicalPath(), cli.getCommandline()[0]);
+    }
+
+    @Test
     public void rejectsWrongRequestTypeWithCheckedError() {
         CommandLineConfigurationException exception = assertThrows(
                 CommandLineConfigurationException.class,
@@ -110,7 +126,7 @@ public class LrfviewerCommandLineBuilderTest {
                 CommandLineConfigurationException.class,
                 () -> new LrfviewerCommandLineBuilder().doCommandInternal(
                         new InterfaceOnlyRequest(), new Commandline()));
-        assertTrue(exception.getMessage().contains("lrsFile"));
+        assertTrue(exception.getMessage().contains("LRF input"));
     }
 
     @Test
@@ -122,7 +138,7 @@ public class LrfviewerCommandLineBuilderTest {
         CommandLineConfigurationException exception = assertThrows(
                 CommandLineConfigurationException.class,
                 () -> new LrfviewerCommandLineBuilder().doCommandInternal(request, new Commandline()));
-        assertTrue(exception.getMessage().contains("lrsFile"));
+        assertTrue(exception.getMessage().contains("LRF input"));
         assertFalse(exception.getMessage().contains(missing.getAbsolutePath()));
     }
 
@@ -134,7 +150,7 @@ public class LrfviewerCommandLineBuilderTest {
         CommandLineConfigurationException exception = assertThrows(
                 CommandLineConfigurationException.class,
                 () -> new LrfviewerCommandLineBuilder().doCommandInternal(request, new Commandline()));
-        assertTrue(exception.getMessage().contains("lrsFile"));
+        assertTrue(exception.getMessage().contains("LRF input"));
         assertTrue(exception.getMessage().contains("file"));
     }
 

@@ -58,9 +58,6 @@ public class Lrs2lrfCommandLineBuilder extends AbstractCommandLineBuilder {
 	@Override
 	protected File findCalibreExecutable()
 			throws CommandLineConfigurationException, IOException {
-		if (Objects.nonNull(calibreExecutable) && calibreExecutable.isAbsolute()) {
-			return calibreExecutable;
-		}
 		return resolveCalibreExecutable("lrs2lrf", null);
 	}
 
@@ -96,17 +93,45 @@ public class Lrs2lrfCommandLineBuilder extends AbstractCommandLineBuilder {
 	}
 
 	protected void setOutputDirectory(Lrs2lrfInvocationRequest request,
-			Commandline cli) {
+			Commandline cli) throws CommandLineConfigurationException {
 		File outputDirectory = request.getOutputDirectory();
 		if (Objects.nonNull(outputDirectory)) {
-			try {
-				outputDirectory = outputDirectory.getCanonicalFile();
-			} catch (IOException e) {
-				logger.debug("Failed to canonicalize lrs2lrf output directory. Using as-is.", e);
-			}
+			outputDirectory = validateOutputDirectory(outputDirectory);
+			File outputFile = outputFile(outputDirectory, request.getLrsFile(), ".lrf");
 
 			cli.createArg().setValue("-o");
-			cli.createArg().setValue(outputDirectory.getPath());
+			cli.createArg().setValue(outputFile.getPath());
+		}
+	}
+
+	private File validateOutputDirectory(File outputDirectory)
+			throws CommandLineConfigurationException {
+		if (!outputDirectory.exists()) {
+			throw new CommandLineConfigurationException(
+					"Lrs2lrf outputDirectory must exist.");
+		}
+		if (!outputDirectory.isDirectory()) {
+			throw new CommandLineConfigurationException(
+					"Lrs2lrf outputDirectory must be a directory.");
+		}
+		try {
+			return outputDirectory.getCanonicalFile();
+		} catch (IOException ignored) {
+			throw new CommandLineConfigurationException(
+					"Cannot canonicalize Lrs2lrf outputDirectory.");
+		}
+	}
+
+	private File outputFile(File outputDirectory, File inputFile, String targetExtension)
+			throws CommandLineConfigurationException {
+		String inputName = inputFile.getName();
+		int extensionIndex = inputName.lastIndexOf('.');
+		String baseName = extensionIndex > 0 ? inputName.substring(0, extensionIndex) : inputName;
+		try {
+			return new File(outputDirectory, baseName + targetExtension).getCanonicalFile();
+		} catch (IOException ignored) {
+			throw new CommandLineConfigurationException(
+					"Cannot canonicalize Lrs2lrf output file.");
 		}
 	}
 }

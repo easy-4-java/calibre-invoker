@@ -53,8 +53,44 @@ public class Lrf2lrsCommandLineBuilderTest {
         Commandline cli = new Commandline();
         new Lrf2lrsCommandLineBuilder().doCommandInternal(request, cli);
 
+        File outputFile = new File(outputDirectory, "book with spaces.lrs");
+        assertFalse(outputFile.exists());
         assertArrayEquals(new String[] {
-                "--dont-output-resources", "-o", outputDirectory.getCanonicalPath(),
+                "--dont-output-resources", "-o", outputFile.getCanonicalPath(),
+                input.getAbsolutePath()
+        }, cli.getArguments());
+    }
+
+    @Test
+    public void derivesOutputNameForInputWithoutExtension() throws Exception {
+        File input = temporaryFolder.newFile("extensionless");
+        File outputDirectory = temporaryFolder.newFolder("extensionless-output");
+        InterfaceOnlyRequest request = new InterfaceOnlyRequest();
+        request.setLrfFile(input);
+        request.setOutputDirectory(outputDirectory);
+
+        Commandline cli = new Commandline();
+        new Lrf2lrsCommandLineBuilder().doCommandInternal(request, cli);
+
+        assertArrayEquals(new String[] {
+                "-o", new File(outputDirectory, "extensionless.lrs").getCanonicalPath(),
+                input.getAbsolutePath()
+        }, cli.getArguments());
+    }
+
+    @Test
+    public void replacesOnlyLastExtensionForMultiDotInput() throws Exception {
+        File input = temporaryFolder.newFile("archive.book.final.lrf");
+        File outputDirectory = temporaryFolder.newFolder("multi-dot-output");
+        InterfaceOnlyRequest request = new InterfaceOnlyRequest();
+        request.setLrfFile(input);
+        request.setOutputDirectory(outputDirectory);
+
+        Commandline cli = new Commandline();
+        new Lrf2lrsCommandLineBuilder().doCommandInternal(request, cli);
+
+        assertArrayEquals(new String[] {
+                "-o", new File(outputDirectory, "archive.book.final.lrs").getCanonicalPath(),
                 input.getAbsolutePath()
         }, cli.getArguments());
     }
@@ -80,6 +116,22 @@ public class Lrf2lrsCommandLineBuilderTest {
         request.setLrfFile(input);
         Lrf2lrsCommandLineBuilder builder = new Lrf2lrsCommandLineBuilder();
         builder.setCalibreHome(calibreHome);
+
+        Commandline cli = builder.build(request);
+
+        assertEquals(executable.getCanonicalPath(), cli.getCommandline()[0]);
+    }
+
+    @Test
+    public void honorsRelativeExecutableOverrideWithinCalibreHome() throws Exception {
+        File input = temporaryFolder.newFile("relative-executable-book.lrf");
+        File calibreHome = temporaryFolder.newFolder("relative-executable-calibre-home");
+        File executable = createExecutable(calibreHome, "custom-lrf2lrs");
+        InterfaceOnlyRequest request = new InterfaceOnlyRequest();
+        request.setLrfFile(input);
+        Lrf2lrsCommandLineBuilder builder = new Lrf2lrsCommandLineBuilder();
+        builder.setCalibreHome(calibreHome);
+        builder.setCalibreExecutable(new File("custom-lrf2lrs"));
 
         Commandline cli = builder.build(request);
 
@@ -135,6 +187,35 @@ public class Lrf2lrsCommandLineBuilderTest {
                 () -> new Lrf2lrsCommandLineBuilder().doCommandInternal(request, new Commandline()));
         assertTrue(exception.getMessage().contains("lrfFile"));
         assertTrue(exception.getMessage().contains("file"));
+    }
+
+    @Test
+    public void rejectsMissingOutputDirectoryWithoutLeakingItsPath() throws Exception {
+        File input = temporaryFolder.newFile("missing-output-book.lrf");
+        File missing = new File(temporaryFolder.getRoot(), "private/missing-output");
+        InterfaceOnlyRequest request = new InterfaceOnlyRequest();
+        request.setLrfFile(input);
+        request.setOutputDirectory(missing);
+
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> new Lrf2lrsCommandLineBuilder().doCommandInternal(request, new Commandline()));
+        assertTrue(exception.getMessage().contains("outputDirectory"));
+        assertFalse(exception.getMessage().contains(missing.getAbsolutePath()));
+    }
+
+    @Test
+    public void rejectsFileAsOutputDirectory() throws Exception {
+        File input = temporaryFolder.newFile("file-output-book.lrf");
+        InterfaceOnlyRequest request = new InterfaceOnlyRequest();
+        request.setLrfFile(input);
+        request.setOutputDirectory(temporaryFolder.newFile("not-an-output-directory"));
+
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> new Lrf2lrsCommandLineBuilder().doCommandInternal(request, new Commandline()));
+        assertTrue(exception.getMessage().contains("outputDirectory"));
+        assertTrue(exception.getMessage().contains("directory"));
     }
 
     private File createExecutable(File calibreHome, String commandName) throws Exception {

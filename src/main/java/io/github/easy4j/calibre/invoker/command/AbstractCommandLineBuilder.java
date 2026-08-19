@@ -144,7 +144,7 @@ public abstract class AbstractCommandLineBuilder {
 
 	final File resolveCalibreExecutable(String commandName, File requestHome)
 			throws CommandLineConfigurationException {
-		return executableResolver.resolve(commandName, requestHome, calibreHome);
+		return executableResolver.resolve(commandName, calibreExecutable, requestHome, calibreHome);
 	}
 	
 	

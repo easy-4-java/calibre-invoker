@@ -48,7 +48,7 @@ public class LrfviewerCommandLineBuilder extends AbstractCommandLineBuilder {
 	protected void doCommandInternal(InvocationRequest request, Commandline cli)
 			throws CommandLineConfigurationException {
 		LrfviewerInvocationRequest lrfviewerRequest = requireTypedRequest(request);
-		validateLrsFile(lrfviewerRequest.getLrsFile());
+		validateLrfInput(lrfviewerRequest.getLrsFile());
 
 		setDisableHyphenation(lrfviewerRequest, cli);
 		setProfile(lrfviewerRequest, cli);
@@ -60,9 +60,6 @@ public class LrfviewerCommandLineBuilder extends AbstractCommandLineBuilder {
 	@Override
 	protected File findCalibreExecutable()
 			throws CommandLineConfigurationException, IOException {
-		if (Objects.nonNull(calibreExecutable) && calibreExecutable.isAbsolute()) {
-			return calibreExecutable;
-		}
 		return resolveCalibreExecutable("lrfviewer", null);
 	}
 
@@ -75,19 +72,19 @@ public class LrfviewerCommandLineBuilder extends AbstractCommandLineBuilder {
 		return (LrfviewerInvocationRequest) request;
 	}
 
-	private void validateLrsFile(File lrsFile)
+	private void validateLrfInput(File lrfInput)
 			throws CommandLineConfigurationException {
-		if (Objects.isNull(lrsFile)) {
+		if (Objects.isNull(lrfInput)) {
 			throw new CommandLineConfigurationException(
-					"Lrfviewer lrsFile must not be null.");
+					"Lrfviewer LRF input (legacy lrsFile) must not be null.");
 		}
-		if (!lrsFile.exists()) {
+		if (!lrfInput.exists()) {
 			throw new CommandLineConfigurationException(
-					"Lrfviewer lrsFile must exist.");
+					"Lrfviewer LRF input (legacy lrsFile) must exist.");
 		}
-		if (!lrsFile.isFile()) {
+		if (!lrfInput.isFile()) {
 			throw new CommandLineConfigurationException(
-					"Lrfviewer lrsFile must be a file.");
+					"Lrfviewer LRF input (legacy lrsFile) must be a file.");
 		}
 	}
 

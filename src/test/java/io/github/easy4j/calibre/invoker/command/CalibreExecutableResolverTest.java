@@ -98,6 +98,45 @@ public class CalibreExecutableResolverTest {
     }
 
     @Test
+    public void windowsAddsExeSuffixToRelativeOverrideWithinCalibreHome() throws Exception {
+        MapFileProbe files = executableFiles("C:/Calibre/tools/custom-viewer.exe");
+        files.directory("C:/Calibre", true);
+        CalibreExecutableResolver resolver = resolverWith(files, "Windows 11", null, null, null);
+
+        File result = resolver.resolve("lrfviewer", file("tools/custom-viewer"),
+                null, file("C:/Calibre"));
+
+        assertEquals(file("C:/Calibre/tools/custom-viewer.exe"), result);
+    }
+
+    @Test
+    public void absoluteOverrideDoesNotRequireCalibreHome() throws Exception {
+        MapFileProbe files = executableFiles("/custom-tools/custom-viewer");
+        CalibreExecutableResolver resolver = resolverWith(files, "Linux", null, null, null);
+
+        File result = resolver.resolve("lrfviewer", file("/custom-tools/custom-viewer"),
+                null, null);
+
+        assertEquals(file("/custom-tools/custom-viewer"), result);
+    }
+
+    @Test
+    public void relativeOverrideCannotEscapeCalibreHomeOrLeakItsValue() throws Exception {
+        String secretRelativePath = "../secret/custom-viewer";
+        MapFileProbe files = executableFiles();
+        files.directory("/calibre", true);
+        CalibreExecutableResolver resolver = resolverWith(files, "Linux", null, null, null);
+
+        try {
+            resolver.resolve("lrfviewer", file(secretRelativePath), null, file("/calibre"));
+            fail("Expected escaping relative executable to fail");
+        } catch (CommandLineConfigurationException exception) {
+            assertTrue(exception.getMessage().contains("relative"));
+            assertFalse(exception.getMessage().contains(secretRelativePath));
+        }
+    }
+
+    @Test
     public void macOsBundleIsLastFallback() throws Exception {
         MapFileProbe files = executableFiles(
                 "/Applications/calibre.app/Contents/MacOS/web2disk");

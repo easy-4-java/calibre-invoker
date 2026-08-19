@@ -122,6 +122,68 @@ public class CalibreExecutableResolver {
         throw new CommandLineConfigurationException(notFoundMessage());
     }
 
+    /**
+     * Resolves an optional executable override. Relative overrides are resolved only within
+     * configured Calibre homes; absolute overrides and their platform suffix are still verified
+     * and canonicalized by this resolver.
+     *
+     * @param commandName Default Calibre command name without a platform suffix.
+     * @param executableOverride Absolute or Calibre-home-relative executable override.
+     * @param requestHome Request-level Calibre home, or {@code null}.
+     * @param invokerHome Invoker-level Calibre home, or {@code null}.
+     * @return The canonical executable file.
+     * @throws CommandLineConfigurationException If the override is invalid or cannot be found.
+     */
+    File resolve(String commandName, File executableOverride, File requestHome, File invokerHome)
+            throws CommandLineConfigurationException {
+        if (Objects.isNull(executableOverride)) {
+            return resolve(commandName, requestHome, invokerHome);
+        }
+        if (StringUtils.isBlank(commandName)) {
+            throw new CommandLineConfigurationException("Calibre command name must not be blank.");
+        }
+
+        File platformOverride = withPlatformSuffix(executableOverride);
+        if (platformOverride.isAbsolute()) {
+            File candidate = executable(platformOverride, "configured calibreExecutable");
+            if (Objects.nonNull(candidate)) {
+                return candidate;
+            }
+            throw new CommandLineConfigurationException(
+                    "Configured Calibre executable was not found.");
+        }
+
+        validateRelativeOverride(platformOverride);
+        File candidate = resolveRelativeConfiguredHome(requestHome, platformOverride,
+                "request calibreHome");
+        if (Objects.nonNull(candidate)) {
+            return candidate;
+        }
+
+        candidate = resolveRelativeConfiguredHome(invokerHome, platformOverride,
+                "invoker calibreHome");
+        if (Objects.nonNull(candidate)) {
+            return candidate;
+        }
+
+        candidate = resolveRelativeConfiguredHome(
+                toFile(propertyProbe.get(CALIBRE_HOME_PROPERTY)), platformOverride,
+                "JVM property calibre.home");
+        if (Objects.nonNull(candidate)) {
+            return candidate;
+        }
+
+        candidate = resolveRelativeConfiguredHome(
+                toFile(environmentProbe.get(CALIBRE_HOME_ENVIRONMENT)), platformOverride,
+                "environment CALIBRE_HOME");
+        if (Objects.nonNull(candidate)) {
+            return candidate;
+        }
+
+        throw new CommandLineConfigurationException(
+                "Relative Calibre executable was not found in configured Calibre homes.");
+    }
+
     private File resolveConfiguredHome(File home, String executableName, String source)
             throws CommandLineConfigurationException {
         if (Objects.isNull(home)) {
@@ -132,6 +194,55 @@ public class CalibreExecutableResolver {
                     "Invalid Calibre directory from " + source + ".");
         }
         return executable(new File(home, executableName), source);
+    }
+
+    private File resolveRelativeConfiguredHome(File home, File relativeExecutable, String source)
+            throws CommandLineConfigurationException {
+        if (Objects.isNull(home)) {
+            return null;
+        }
+        if (!fileProbe.isDirectory(home)) {
+            throw new CommandLineConfigurationException(
+                    "Invalid Calibre directory from " + source + ".");
+        }
+
+        File canonicalHome = canonical(home, source, "Calibre directory");
+        File canonicalCandidate = canonical(new File(home, relativeExecutable.getPath()),
+                source, "Calibre executable");
+        if (!canonicalCandidate.toPath().startsWith(canonicalHome.toPath())) {
+            throw new CommandLineConfigurationException(
+                    "Configured relative Calibre executable must remain within " + source + ".");
+        }
+        if (!fileProbe.isExecutable(canonicalCandidate)) {
+            return null;
+        }
+        return canonicalCandidate;
+    }
+
+    private File withPlatformSuffix(File executableOverride) {
+        String path = executableOverride.getPath();
+        if (windows && !path.toLowerCase(Locale.ENGLISH).endsWith(".exe")) {
+            return new File(path + ".exe");
+        }
+        return executableOverride;
+    }
+
+    private void validateRelativeOverride(File executableOverride)
+            throws CommandLineConfigurationException {
+        if (executableOverride.toPath().normalize().startsWith("..")) {
+            throw new CommandLineConfigurationException(
+                    "Configured relative Calibre executable must remain within calibreHome.");
+        }
+    }
+
+    private File canonical(File candidate, String source, String description)
+            throws CommandLineConfigurationException {
+        try {
+            return fileProbe.canonical(candidate);
+        } catch (IOException ignored) {
+            throw new CommandLineConfigurationException(
+                    "Cannot canonicalize " + description + " from " + source + ".");
+        }
     }
 
     private File resolveFromPath(String executableName)
