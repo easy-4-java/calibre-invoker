@@ -15,100 +15,174 @@
  */
 package io.github.easy4j.calibre.invoker.command;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.Commandline;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import io.github.easy4j.calibre.invoker.exception.CommandLineConfigurationException;
-import io.github.easy4j.calibre.invoker.request.DefaultLrf2lrsInvocationRequest;
+import io.github.easy4j.calibre.invoker.request.AbstractInvocationRequest;
 import io.github.easy4j.calibre.invoker.request.DefaultWeb2diskInvocationRequest;
+import io.github.easy4j.calibre.invoker.request.InvocationRequest;
+import io.github.easy4j.calibre.invoker.request.Lrf2lrsInvocationRequest;
 
-/**
- * Tests for {@link Lrf2lrsCommandLineBuilder}.
- */
+/** Tests for {@link Lrf2lrsCommandLineBuilder}. */
 public class Lrf2lrsCommandLineBuilderTest {
 
-    @Test
-    public void shouldExtendAbstractCommandLineBuilder() {
-        Lrf2lrsCommandLineBuilder builder = new Lrf2lrsCommandLineBuilder();
-        assertTrue(builder instanceof AbstractCommandLineBuilder);
-    }
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
-    public void shouldSetDontOutputResources() {
-        Lrf2lrsCommandLineBuilder builder = new Lrf2lrsCommandLineBuilder();
-        DefaultLrf2lrsInvocationRequest request = new DefaultLrf2lrsInvocationRequest();
+    public void acceptsItsRequestInterfaceAndEmitsExactTokens() throws Exception {
+        File input = temporaryFolder.newFile("book with spaces.lrf");
+        File outputDirectory = temporaryFolder.newFolder("output with spaces");
+        InterfaceOnlyRequest request = new InterfaceOnlyRequest();
         request.setDontOutputResources(true);
+        request.setOutputDirectory(outputDirectory);
+        request.setLrfFile(input);
 
         Commandline cli = new Commandline();
-        builder.setDontOutputResources(request, cli);
+        new Lrf2lrsCommandLineBuilder().doCommandInternal(request, cli);
 
-        String[] args = cli.getArguments();
-        boolean found = false;
-        for (String arg : args) {
-            if ("--dont-output-resources".equals(arg)) {
-                found = true;
-                break;
-            }
+        assertArrayEquals(new String[] {
+                "--dont-output-resources", "-o", outputDirectory.getCanonicalPath(),
+                input.getAbsolutePath()
+        }, cli.getArguments());
+    }
+
+    @Test
+    public void defaultOptionsEmitOnlyTheRequiredInputFile() throws Exception {
+        File input = temporaryFolder.newFile("default-book.lrf");
+        InterfaceOnlyRequest request = new InterfaceOnlyRequest();
+        request.setLrfFile(input);
+
+        Commandline cli = new Commandline();
+        new Lrf2lrsCommandLineBuilder().doCommandInternal(request, cli);
+
+        assertArrayEquals(new String[] {input.getAbsolutePath()}, cli.getArguments());
+    }
+
+    @Test
+    public void usesLrf2lrsExecutableResolvedFromCalibreHome() throws Exception {
+        File input = temporaryFolder.newFile("book.lrf");
+        File calibreHome = temporaryFolder.newFolder("calibre-home");
+        File executable = createExecutable(calibreHome, "lrf2lrs");
+        InterfaceOnlyRequest request = new InterfaceOnlyRequest();
+        request.setLrfFile(input);
+        Lrf2lrsCommandLineBuilder builder = new Lrf2lrsCommandLineBuilder();
+        builder.setCalibreHome(calibreHome);
+
+        Commandline cli = builder.build(request);
+
+        assertEquals(executable.getCanonicalPath(), cli.getCommandline()[0]);
+    }
+
+    @Test
+    public void rejectsWrongRequestTypeWithCheckedError() {
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> new Lrf2lrsCommandLineBuilder().doCommandInternal(
+                        new DefaultWeb2diskInvocationRequest(), new Commandline()));
+        assertTrue(exception.getMessage().contains("Lrf2lrsInvocationRequest"));
+    }
+
+    @Test
+    public void rejectsNullRequestWithoutNullPointerException() {
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> new Lrf2lrsCommandLineBuilder().build(null));
+        assertTrue(exception.getMessage().contains("Lrf2lrsInvocationRequest"));
+    }
+
+    @Test
+    public void rejectsMissingLrfFileWithFieldSpecificError() {
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> new Lrf2lrsCommandLineBuilder().doCommandInternal(
+                        new InterfaceOnlyRequest(), new Commandline()));
+        assertTrue(exception.getMessage().contains("lrfFile"));
+    }
+
+    @Test
+    public void rejectsNonexistentLrfFileWithoutLeakingItsAbsolutePath() {
+        File missing = new File(temporaryFolder.getRoot(), "private/missing-book.lrf");
+        InterfaceOnlyRequest request = new InterfaceOnlyRequest();
+        request.setLrfFile(missing);
+
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> new Lrf2lrsCommandLineBuilder().doCommandInternal(request, new Commandline()));
+        assertTrue(exception.getMessage().contains("lrfFile"));
+        assertFalse(exception.getMessage().contains(missing.getAbsolutePath()));
+    }
+
+    @Test
+    public void rejectsDirectoryAsLrfFile() throws Exception {
+        InterfaceOnlyRequest request = new InterfaceOnlyRequest();
+        request.setLrfFile(temporaryFolder.newFolder("not-a-file.lrf"));
+
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> new Lrf2lrsCommandLineBuilder().doCommandInternal(request, new Commandline()));
+        assertTrue(exception.getMessage().contains("lrfFile"));
+        assertTrue(exception.getMessage().contains("file"));
+    }
+
+    private File createExecutable(File calibreHome, String commandName) throws Exception {
+        String executableName = Os.isFamily("windows") ? commandName + ".exe" : commandName;
+        File executable = new File(calibreHome, executableName);
+        assertTrue(executable.createNewFile());
+        assertTrue(executable.setExecutable(true) || Os.isFamily("windows"));
+        return executable;
+    }
+
+    private static final class InterfaceOnlyRequest extends AbstractInvocationRequest
+            implements Lrf2lrsInvocationRequest {
+
+        private boolean dontOutputResources;
+        private File lrfFile;
+        private File outputDirectory;
+
+        @Override
+        public boolean isDontOutputResources() {
+            return dontOutputResources;
         }
-        assertTrue(found);
-    }
 
-    @Test
-    public void shouldNotSetDontOutputResourcesWhenFalse() {
-        Lrf2lrsCommandLineBuilder builder = new Lrf2lrsCommandLineBuilder();
-        DefaultLrf2lrsInvocationRequest request = new DefaultLrf2lrsInvocationRequest();
-        request.setDontOutputResources(false);
-
-        Commandline cli = new Commandline();
-        builder.setDontOutputResources(request, cli);
-
-        assertEquals(0, cli.getArguments().length);
-    }
-
-    @Test
-    public void shouldSetOutputDirectory() {
-        Lrf2lrsCommandLineBuilder builder = new Lrf2lrsCommandLineBuilder();
-        DefaultLrf2lrsInvocationRequest request = new DefaultLrf2lrsInvocationRequest();
-        request.setOutputDirectory(new File("/tmp/output"));
-
-        Commandline cli = new Commandline();
-        builder.setOutputDirectory(request, cli);
-
-        String[] args = cli.getArguments();
-        boolean foundO = false;
-        for (int i = 0; i < args.length; i++) {
-            if ("-o".equals(args[i])) {
-                foundO = true;
-                break;
-            }
+        @Override
+        public File getLrfFile() {
+            return lrfFile;
         }
-        assertTrue(foundO);
-    }
 
-    @Test
-    public void shouldNotSetOutputDirectoryWhenNull() {
-        Lrf2lrsCommandLineBuilder builder = new Lrf2lrsCommandLineBuilder();
-        DefaultLrf2lrsInvocationRequest request = new DefaultLrf2lrsInvocationRequest();
+        @Override
+        public File getOutputDirectory() {
+            return outputDirectory;
+        }
 
-        Commandline cli = new Commandline();
-        builder.setOutputDirectory(request, cli);
+        @Override
+        public InvocationRequest setDontOutputResources(boolean value) {
+            dontOutputResources = value;
+            return this;
+        }
 
-        assertEquals(0, cli.getArguments().length);
-    }
+        @Override
+        public InvocationRequest setOutputDirectory(File value) {
+            outputDirectory = value;
+            return this;
+        }
 
-    @Test
-    public void shouldNotDoCommandInternalForWrongRequestType() throws CommandLineConfigurationException {
-        Lrf2lrsCommandLineBuilder builder = new Lrf2lrsCommandLineBuilder();
-        // Pass a non-Lrs2lrfInvocationRequest - should be a no-op
-        DefaultWeb2diskInvocationRequest request = new DefaultWeb2diskInvocationRequest();
-
-        Commandline cli = new Commandline();
-        builder.doCommandInternal(request, cli);
-
-        // Should not throw, just no-op
+        @Override
+        public InvocationRequest setLrfFile(File value) {
+            lrfFile = value;
+            return this;
+        }
     }
 }

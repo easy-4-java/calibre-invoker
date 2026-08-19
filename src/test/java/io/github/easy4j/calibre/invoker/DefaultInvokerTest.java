@@ -38,6 +38,9 @@ import io.github.easy4j.calibre.invoker.command.Web2diskCommandLineBuilder;
 import io.github.easy4j.calibre.invoker.exception.CalibreInvocationException;
 import io.github.easy4j.calibre.invoker.request.DefaultEbookConvertInvocationRequest;
 import io.github.easy4j.calibre.invoker.request.DefaultFetchEbookMetadataInvocationRequest;
+import io.github.easy4j.calibre.invoker.request.DefaultLrf2lrsInvocationRequest;
+import io.github.easy4j.calibre.invoker.request.DefaultLrfviewerInvocationRequest;
+import io.github.easy4j.calibre.invoker.request.DefaultLrs2lrfInvocationRequest;
 import io.github.easy4j.calibre.invoker.request.DefaultWeb2diskInvocationRequest;
 import io.github.easy4j.calibre.invoker.support.RecordingProcessExecutor;
 
@@ -207,6 +210,51 @@ public class DefaultInvokerTest {
     }
 
     @Test
+    public void lrf2lrsRoutesThroughDefaultRegistryToRecordingProcessExecutor() throws Exception {
+        String executableName = platformExecutableName("lrf2lrs");
+        RecordingProcessExecutor executor = new RecordingProcessExecutor(0);
+        DefaultInvoker invoker = new DefaultInvoker(executor);
+        invoker.setCalibreHome(createFakeCalibreHome("lrf2lrs-calibre-home", executableName));
+        DefaultLrf2lrsInvocationRequest request = new DefaultLrf2lrsInvocationRequest();
+        request.setLrfFile(temporaryFolder.newFile("route-book.lrf"));
+
+        InvocationResult result = invoker.execute(request);
+
+        assertEquals(0, result.getExitCode());
+        assertEquals(executableName, executor.getExecutableName());
+    }
+
+    @Test
+    public void lrs2lrfRoutesThroughDefaultRegistryToRecordingProcessExecutor() throws Exception {
+        String executableName = platformExecutableName("lrs2lrf");
+        RecordingProcessExecutor executor = new RecordingProcessExecutor(0);
+        DefaultInvoker invoker = new DefaultInvoker(executor);
+        invoker.setCalibreHome(createFakeCalibreHome("lrs2lrf-calibre-home", executableName));
+        DefaultLrs2lrfInvocationRequest request = new DefaultLrs2lrfInvocationRequest();
+        request.setLrsFile(temporaryFolder.newFile("route-book.lrs"));
+
+        InvocationResult result = invoker.execute(request);
+
+        assertEquals(0, result.getExitCode());
+        assertEquals(executableName, executor.getExecutableName());
+    }
+
+    @Test
+    public void lrfviewerRoutesThroughDefaultRegistryToRecordingProcessExecutor() throws Exception {
+        String executableName = platformExecutableName("lrfviewer");
+        RecordingProcessExecutor executor = new RecordingProcessExecutor(0);
+        DefaultInvoker invoker = new DefaultInvoker(executor);
+        invoker.setCalibreHome(createFakeCalibreHome("lrfviewer-calibre-home", executableName));
+        DefaultLrfviewerInvocationRequest request = new DefaultLrfviewerInvocationRequest();
+        request.setLrsFile(temporaryFolder.newFile("route-viewer-book.lrf"));
+
+        InvocationResult result = invoker.execute(request);
+
+        assertEquals(0, result.getExitCode());
+        assertEquals(executableName, executor.getExecutableName());
+    }
+
+    @Test
     public void requestCalibreHomeOverridesInvokerHome() throws Exception {
         File invokerHome = createFakeCalibreHome("invoker-home");
         File requestHome = createFakeCalibreHome("request-home");
@@ -328,6 +376,10 @@ public class DefaultInvokerTest {
 
     private String fetchMetadataExecutableName() {
         return Os.isFamily("windows") ? "fetch-ebook-metadata.exe" : "fetch-ebook-metadata";
+    }
+
+    private String platformExecutableName(String commandName) {
+        return Os.isFamily("windows") ? commandName + ".exe" : commandName;
     }
 
     private DefaultWeb2diskInvocationRequest validWeb2diskRequest() {

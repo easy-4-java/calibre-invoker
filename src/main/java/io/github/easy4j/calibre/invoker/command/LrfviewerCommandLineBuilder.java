@@ -17,8 +17,8 @@ package io.github.easy4j.calibre.invoker.command;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
-import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.Commandline;
 
 import io.github.easy4j.calibre.invoker.exception.CommandLineConfigurationException;
@@ -33,88 +33,87 @@ import io.github.easy4j.calibre.invoker.request.LrfviewerInvocationRequest;
  * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see AbstractCommandLineBuilder
- * @see io.github.easy4j.calibre.invoker.request.LrfviewerInvocationRequest
+ * @see LrfviewerInvocationRequest
  */
 public class LrfviewerCommandLineBuilder extends AbstractCommandLineBuilder {
 
 	@Override
-	protected void doCommandInternal(InvocationRequest request, Commandline cli)
+	public Commandline build(InvocationRequest request)
 			throws CommandLineConfigurationException {
-		
-		if(request instanceof LrfviewerInvocationRequest) {
-
-			LrfviewerInvocationRequest lrfviewerfRequest = ( LrfviewerInvocationRequest) request;
-			
-			setDisableHyphenation(lrfviewerfRequest, cli);
-			setProfile(lrfviewerfRequest, cli);
-			setVisualDebug(lrfviewerfRequest, cli);
-			setWhiteBackground(lrfviewerfRequest, cli);
-			
-			// LRS file path. file.lrs
-			cli.createArg().setValue(lrfviewerfRequest.getLrsFile().getAbsolutePath());
-			
-		}
-		
+		requireTypedRequest(request);
+		return super.build(request);
 	}
 
 	@Override
-	protected File findCalibreExecutable() throws CommandLineConfigurationException, IOException {
-		
-		if (calibreHome == null) {
-			findCalibreHome();
-		}
+	protected void doCommandInternal(InvocationRequest request, Commandline cli)
+			throws CommandLineConfigurationException {
+		LrfviewerInvocationRequest lrfviewerRequest = requireTypedRequest(request);
+		validateLrsFile(lrfviewerRequest.getLrsFile());
 
-		logger.debug("Using ${calibre.home} of: \'" + calibreHome + "\'.");
-
-		if (calibreExecutable == null || !calibreExecutable.isAbsolute()) {
-			String executable;
-			if (calibreExecutable != null) {
-				executable = calibreExecutable.getPath();
-			} else if (Os.isFamily("windows")) {
-				executable = "lrs2lrf.exe";
-			} else {
-				executable = "lrs2lrf";
-			}
-
-			calibreExecutable = new File(calibreHome, executable);
-
-			try {
-				File canonicalMvn = calibreExecutable.getCanonicalFile();
-				calibreExecutable = canonicalMvn;
-			} catch (IOException e) {
-				logger.debug("Failed to canonicalize maven executable: " + calibreExecutable + ". Using as-is.", e);
-			}
-
-			if (!calibreExecutable.isFile()) {
-				throw new CommandLineConfigurationException("Calibre executable not found at: " + calibreExecutable);
-			}
-		}
-
-		return calibreExecutable;
+		setDisableHyphenation(lrfviewerRequest, cli);
+		setProfile(lrfviewerRequest, cli);
+		setVisualDebug(lrfviewerRequest, cli);
+		setWhiteBackground(lrfviewerRequest, cli);
+		cli.createArg().setValue(lrfviewerRequest.getLrsFile().getAbsolutePath());
 	}
-	
-	protected void setDisableHyphenation(LrfviewerInvocationRequest request, Commandline cli) {
-		if(request.isDisableHyphenation()) {
+
+	@Override
+	protected File findCalibreExecutable()
+			throws CommandLineConfigurationException, IOException {
+		if (Objects.nonNull(calibreExecutable) && calibreExecutable.isAbsolute()) {
+			return calibreExecutable;
+		}
+		return resolveCalibreExecutable("lrfviewer", null);
+	}
+
+	private LrfviewerInvocationRequest requireTypedRequest(InvocationRequest request)
+			throws CommandLineConfigurationException {
+		if (Objects.isNull(request) || !(request instanceof LrfviewerInvocationRequest)) {
+			throw new CommandLineConfigurationException(
+					"Request must implement LrfviewerInvocationRequest.");
+		}
+		return (LrfviewerInvocationRequest) request;
+	}
+
+	private void validateLrsFile(File lrsFile)
+			throws CommandLineConfigurationException {
+		if (Objects.isNull(lrsFile)) {
+			throw new CommandLineConfigurationException(
+					"Lrfviewer lrsFile must not be null.");
+		}
+		if (!lrsFile.exists()) {
+			throw new CommandLineConfigurationException(
+					"Lrfviewer lrsFile must exist.");
+		}
+		if (!lrsFile.isFile()) {
+			throw new CommandLineConfigurationException(
+					"Lrfviewer lrsFile must be a file.");
+		}
+	}
+
+	protected void setDisableHyphenation(LrfviewerInvocationRequest request,
+			Commandline cli) {
+		if (request.isDisableHyphenation()) {
 			cli.createArg().setValue("--disable-hyphenation");
 		}
 	}
-	
+
 	protected void setProfile(LrfviewerInvocationRequest request, Commandline cli) {
-		if(request.isProfile()) {
+		if (request.isProfile()) {
 			cli.createArg().setValue("--profile");
 		}
 	}
-	
+
 	protected void setVisualDebug(LrfviewerInvocationRequest request, Commandline cli) {
-		if(request.isVisualDebug()) {
+		if (request.isVisualDebug()) {
 			cli.createArg().setValue("--visual-debug");
 		}
 	}
-	
-	protected void setWhiteBackground(LrfviewerInvocationRequest request, Commandline cli) {
-		if(request.isWhiteBackground()) {
+
+	protected void setWhiteBackground(LrfviewerInvocationRequest request,
+			Commandline cli) {
+		if (request.isWhiteBackground()) {
 			cli.createArg().setValue("--white-background");
 		}
 	}
-
 }

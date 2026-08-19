@@ -17,8 +17,8 @@ package io.github.easy4j.calibre.invoker.command;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
-import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.Commandline;
 
 import io.github.easy4j.calibre.invoker.exception.CommandLineConfigurationException;
@@ -33,88 +33,80 @@ import io.github.easy4j.calibre.invoker.request.Lrs2lrfInvocationRequest;
  * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see AbstractCommandLineBuilder
- * @see io.github.easy4j.calibre.invoker.request.Lrs2lrfInvocationRequest
+ * @see Lrs2lrfInvocationRequest
  */
 public class Lrs2lrfCommandLineBuilder extends AbstractCommandLineBuilder {
 
 	@Override
-	protected void doCommandInternal(InvocationRequest request, Commandline cli)
+	public Commandline build(InvocationRequest request)
 			throws CommandLineConfigurationException {
-		
-		if(request instanceof Lrs2lrfInvocationRequest) {
-
-			Lrs2lrfInvocationRequest lrs2lrfRequest = ( Lrs2lrfInvocationRequest) request;
-			
-			setLrs(lrs2lrfRequest, cli);
-			setOutputDirectory(lrs2lrfRequest, cli);
-			// LRS file path. file.lrs
-			cli.createArg().setValue(lrs2lrfRequest.getLrsFile().getAbsolutePath());
-			
-		}
-		
+		requireTypedRequest(request);
+		return super.build(request);
 	}
 
 	@Override
-	protected File findCalibreExecutable() throws CommandLineConfigurationException, IOException {
-		
-		if (calibreHome == null) {
-			findCalibreHome();
-		}
+	protected void doCommandInternal(InvocationRequest request, Commandline cli)
+			throws CommandLineConfigurationException {
+		Lrs2lrfInvocationRequest lrs2lrfRequest = requireTypedRequest(request);
+		validateLrsFile(lrs2lrfRequest.getLrsFile());
 
-		logger.debug("Using ${calibre.home} of: \'" + calibreHome + "\'.");
-
-		if (calibreExecutable == null || !calibreExecutable.isAbsolute()) {
-			String executable;
-			if (calibreExecutable != null) {
-				executable = calibreExecutable.getPath();
-			} else if (Os.isFamily("windows")) {
-				executable = "lrs2lrf.exe";
-			} else {
-				executable = "lrs2lrf";
-			}
-
-			calibreExecutable = new File(calibreHome, executable);
-
-			try {
-				File canonicalMvn = calibreExecutable.getCanonicalFile();
-				calibreExecutable = canonicalMvn;
-			} catch (IOException e) {
-				logger.debug("Failed to canonicalize maven executable: " + calibreExecutable + ". Using as-is.", e);
-			}
-
-			if (!calibreExecutable.isFile()) {
-				throw new CommandLineConfigurationException("Calibre executable not found at: " + calibreExecutable);
-			}
-		}
-
-		return calibreExecutable;
+		setLrs(lrs2lrfRequest, cli);
+		setOutputDirectory(lrs2lrfRequest, cli);
+		cli.createArg().setValue(lrs2lrfRequest.getLrsFile().getAbsolutePath());
 	}
-	
+
+	@Override
+	protected File findCalibreExecutable()
+			throws CommandLineConfigurationException, IOException {
+		if (Objects.nonNull(calibreExecutable) && calibreExecutable.isAbsolute()) {
+			return calibreExecutable;
+		}
+		return resolveCalibreExecutable("lrs2lrf", null);
+	}
+
+	private Lrs2lrfInvocationRequest requireTypedRequest(InvocationRequest request)
+			throws CommandLineConfigurationException {
+		if (Objects.isNull(request) || !(request instanceof Lrs2lrfInvocationRequest)) {
+			throw new CommandLineConfigurationException(
+					"Request must implement Lrs2lrfInvocationRequest.");
+		}
+		return (Lrs2lrfInvocationRequest) request;
+	}
+
+	private void validateLrsFile(File lrsFile)
+			throws CommandLineConfigurationException {
+		if (Objects.isNull(lrsFile)) {
+			throw new CommandLineConfigurationException(
+					"Lrs2lrf lrsFile must not be null.");
+		}
+		if (!lrsFile.exists()) {
+			throw new CommandLineConfigurationException(
+					"Lrs2lrf lrsFile must exist.");
+		}
+		if (!lrsFile.isFile()) {
+			throw new CommandLineConfigurationException(
+					"Lrs2lrf lrsFile must be a file.");
+		}
+	}
+
 	protected void setLrs(Lrs2lrfInvocationRequest request, Commandline cli) {
-		if(request.isLrs()) {
+		if (request.isLrs()) {
 			cli.createArg().setValue("--lrs");
 		}
 	}
 
-	protected void setOutputDirectory(Lrs2lrfInvocationRequest request, Commandline cli) {
-		
+	protected void setOutputDirectory(Lrs2lrfInvocationRequest request,
+			Commandline cli) {
 		File outputDirectory = request.getOutputDirectory();
-		if (outputDirectory != null) {
+		if (Objects.nonNull(outputDirectory)) {
 			try {
-				File canSet = outputDirectory.getCanonicalFile();
-				outputDirectory = canSet;
+				outputDirectory = outputDirectory.getCanonicalFile();
 			} catch (IOException e) {
-				logger.debug("Failed to canonicalize output path: " + outputDirectory.getAbsolutePath() + ".", e);
+				logger.debug("Failed to canonicalize lrs2lrf output directory. Using as-is.", e);
 			}
 
 			cli.createArg().setValue("-o");
 			cli.createArg().setValue(outputDirectory.getPath());
 		}
- 
 	}
-
-	
-	 
-	
-
 }
