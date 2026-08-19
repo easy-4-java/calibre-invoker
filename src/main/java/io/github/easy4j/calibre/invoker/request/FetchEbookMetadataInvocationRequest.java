@@ -16,7 +16,10 @@
 package io.github.easy4j.calibre.invoker.request;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Specifies the parameters used to control a Calibre {@code fetch-ebook-metadata} invocation.
@@ -44,16 +47,26 @@ public interface FetchEbookMetadataInvocationRequest extends InvocationRequest {
 	public String getAllowedPlugin();
 
 	/** Returns the ordered metadata download plugin names. */
-	List<String> getAllowedPlugins();
+	default List<String> getAllowedPlugins() {
+		String allowedPlugin = getAllowedPlugin();
+		return StringUtils.isEmpty(allowedPlugin)
+				? Collections.emptyList() : Collections.singletonList(allowedPlugin);
+	}
 
 	/** Returns the book authors, or {@code null} when not set. */
-	String getAuthors();
+	default String getAuthors() {
+		return null;
+	}
 
 	/** Returns the book ISBN, or {@code null} when not set. */
-	String getIsbn();
+	default String getIsbn() {
+		return null;
+	}
 
 	/** Returns the book title, or {@code null} when not set. */
-	String getTitle();
+	default String getTitle() {
+		return null;
+	}
 
 	/**
 	 * Returns whether the authors parameter is specified.

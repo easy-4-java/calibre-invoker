@@ -18,18 +18,67 @@ package io.github.easy4j.calibre.invoker.command;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 
 import org.codehaus.plexus.util.cli.Commandline;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import io.github.easy4j.calibre.invoker.exception.CommandLineConfigurationException;
 import io.github.easy4j.calibre.invoker.request.DefaultFetchEbookMetadataInvocationRequest;
 import io.github.easy4j.calibre.invoker.request.DefaultWeb2diskInvocationRequest;
+import io.github.easy4j.calibre.invoker.request.FetchEbookMetadataInvocationRequest;
 
 /**
  * Tests for {@link FetchEbookMetadataCommandLineBuilder}.
  */
 public class FetchEbookMetadataCommandLineBuilderTest {
+
+    private static final String LEGACY_INTERFACE_SOURCE =
+            "package io.github.easy4j.calibre.invoker.request;\n"
+            + "import java.io.File;\n"
+            + "public interface FetchEbookMetadataInvocationRequest extends InvocationRequest {\n"
+            + " File getCoverFile(); String getAllowedPlugin(); boolean isAuthors();\n"
+            + " boolean isIsbn(); boolean isOpf(); boolean isTitle(); long getTimeout();\n"
+            + " InvocationRequest setAllowedPlugin(String value);\n"
+            + " InvocationRequest setAuthors(boolean value); InvocationRequest setIsbn(boolean value);\n"
+            + " InvocationRequest setCoverFile(File value); InvocationRequest setOpf(boolean value);\n"
+            + " InvocationRequest setTimeout(long value); InvocationRequest setTitle(boolean value);\n"
+            + "}\n";
+
+    private static final String LEGACY_IMPLEMENTATION_SOURCE =
+            "package legacy.fixture;\n"
+            + "import java.io.File;\n"
+            + "import io.github.easy4j.calibre.invoker.request.AbstractInvocationRequest;\n"
+            + "import io.github.easy4j.calibre.invoker.request.FetchEbookMetadataInvocationRequest;\n"
+            + "import io.github.easy4j.calibre.invoker.request.InvocationRequest;\n"
+            + "public final class LegacyFetchMetadataRequest extends AbstractInvocationRequest "
+            + "implements FetchEbookMetadataInvocationRequest {\n"
+            + " public File getCoverFile() { return null; }\n"
+            + " public String getAllowedPlugin() { return \"Google\"; }\n"
+            + " public boolean isAuthors() { return true; } public boolean isIsbn() { return false; }\n"
+            + " public boolean isOpf() { return false; } public boolean isTitle() { return false; }\n"
+            + " public long getTimeout() { return 30; }\n"
+            + " public InvocationRequest setAllowedPlugin(String value) { return this; }\n"
+            + " public InvocationRequest setAuthors(boolean value) { return this; }\n"
+            + " public InvocationRequest setIsbn(boolean value) { return this; }\n"
+            + " public InvocationRequest setCoverFile(File value) { return this; }\n"
+            + " public InvocationRequest setOpf(boolean value) { return this; }\n"
+            + " public InvocationRequest setTimeout(long value) { return this; }\n"
+            + " public InvocationRequest setTitle(boolean value) { return this; }\n"
+            + "}\n";
+
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
     public void shouldExtendAbstractCommandLineBuilder() {
@@ -285,5 +334,54 @@ public class FetchEbookMetadataCommandLineBuilderTest {
                 () -> new FetchEbookMetadataCommandLineBuilder().doCommandInternal(
                         request, new Commandline()));
         assertTrue(exception.getMessage().contains("authors"));
+    }
+
+    @Test
+    public void legacyBinaryImplementationUsesDefaultsInsteadOfAbstractMethodError() throws Exception {
+        Class<?> legacyType = compileAndLoadLegacyRequest();
+        assertFalse(Arrays.stream(legacyType.getDeclaredMethods())
+                .anyMatch(method -> Arrays.asList(
+                        "getAllowedPlugins", "getAuthors", "getIsbn", "getTitle")
+                        .contains(method.getName())));
+
+        FetchEbookMetadataInvocationRequest request =
+                (FetchEbookMetadataInvocationRequest) legacyType.getDeclaredConstructor().newInstance();
+        assertEquals(Collections.singletonList("Google"), request.getAllowedPlugins());
+        assertNull(request.getAuthors());
+        assertNull(request.getIsbn());
+        assertNull(request.getTitle());
+
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> new FetchEbookMetadataCommandLineBuilder().doCommandInternal(
+                        request, new Commandline()));
+        assertTrue(exception.getMessage().contains("authors"));
+    }
+
+    private Class<?> compileAndLoadLegacyRequest() throws Exception {
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        assertNotNull("Tests require a JDK compiler", compiler);
+        Path sourceRoot = temporaryFolder.newFolder("legacy-source").toPath();
+        Path classesRoot = temporaryFolder.newFolder("legacy-classes").toPath();
+        Path interfaceSource = sourceRoot.resolve(
+                "io/github/easy4j/calibre/invoker/request/FetchEbookMetadataInvocationRequest.java");
+        Path implementationSource = sourceRoot.resolve(
+                "legacy/fixture/LegacyFetchMetadataRequest.java");
+        Files.createDirectories(interfaceSource.getParent());
+        Files.createDirectories(implementationSource.getParent());
+        Files.write(interfaceSource, LEGACY_INTERFACE_SOURCE.getBytes(StandardCharsets.UTF_8));
+        Files.write(implementationSource, LEGACY_IMPLEMENTATION_SOURCE.getBytes(StandardCharsets.UTF_8));
+
+        int exitCode = compiler.run(null, null, null,
+                "-classpath", System.getProperty("java.class.path"),
+                "-d", classesRoot.toString(),
+                interfaceSource.toString(), implementationSource.toString());
+        assertEquals("Legacy fixture must compile against the old interface", 0, exitCode);
+
+        try (URLClassLoader loader = new URLClassLoader(
+                new java.net.URL[] {classesRoot.toUri().toURL()},
+                FetchEbookMetadataInvocationRequest.class.getClassLoader())) {
+            return Class.forName("legacy.fixture.LegacyFetchMetadataRequest", true, loader);
+        }
     }
 }
