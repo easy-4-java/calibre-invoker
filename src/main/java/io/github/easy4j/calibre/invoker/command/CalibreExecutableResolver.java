@@ -162,9 +162,9 @@ public class CalibreExecutableResolver {
         }
         try {
             return fileProbe.canonical(candidate);
-        } catch (IOException exception) {
+        } catch (IOException ignored) {
             throw new CommandLineConfigurationException(
-                    "Cannot canonicalize Calibre executable from " + source + ".", exception);
+                    "Cannot canonicalize Calibre executable from " + source + ".");
         }
     }
 

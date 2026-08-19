@@ -143,6 +143,24 @@ public class CalibreExecutableResolverTest {
         }
     }
 
+    @Test
+    public void canonicalizationFailureDoesNotExposeConfiguredPathInThrowableChain()
+            throws Exception {
+        String secretPath = "/sentinel-secret/calibre";
+        MapFileProbe files = executableFiles(secretPath + "/web2disk");
+        files.failCanonicalizationWith(
+                new IOException("Cannot canonicalize " + secretPath + "/web2disk"));
+        CalibreExecutableResolver resolver = resolverWith(files, "Linux", null, null, null);
+
+        try {
+            resolver.resolve("web2disk", file(secretPath), null);
+            fail("Expected canonicalization failure");
+        } catch (CommandLineConfigurationException exception) {
+            assertTrue(exception.getMessage().contains("request calibreHome"));
+            assertThrowableChainDoesNotContain(exception, secretPath);
+        }
+    }
+
     private static CalibreExecutableResolver resolverWith(MapFileProbe files, String osName,
             String propertyHome, String environmentHome, String path) {
         return new CalibreExecutableResolver(
@@ -176,10 +194,22 @@ public class CalibreExecutableResolverTest {
         return new File(path);
     }
 
+    private static void assertThrowableChainDoesNotContain(Throwable throwable, String secret) {
+        Throwable current = throwable;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null) {
+                assertFalse(message.contains(secret));
+            }
+            current = current.getCause();
+        }
+    }
+
     private static final class MapFileProbe implements CalibreExecutableResolver.FileProbe {
 
         private final Map<String, Boolean> directories = new HashMap<String, Boolean>();
         private final Map<String, Boolean> executables = new HashMap<String, Boolean>();
+        private IOException canonicalFailure;
 
         private void directory(String path, boolean directory) {
             directories.put(file(path).getPath(), directory);
@@ -187,6 +217,10 @@ public class CalibreExecutableResolverTest {
 
         private void executable(String path, boolean executable) {
             executables.put(file(path).getPath(), executable);
+        }
+
+        private void failCanonicalizationWith(IOException canonicalFailure) {
+            this.canonicalFailure = canonicalFailure;
         }
 
         @Override
@@ -201,6 +235,9 @@ public class CalibreExecutableResolverTest {
 
         @Override
         public File canonical(File candidate) throws IOException {
+            if (canonicalFailure != null) {
+                throw canonicalFailure;
+            }
             return candidate;
         }
     }
