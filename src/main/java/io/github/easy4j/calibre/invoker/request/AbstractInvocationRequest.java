@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 import io.github.easy4j.calibre.invoker.InvocationOutputHandler;
@@ -63,7 +64,7 @@ public abstract class AbstractInvocationRequest implements InvocationRequest {
 	 * {@inheritDoc}
 	 */
 	public InvocationOutputHandler getErrorHandler(InvocationOutputHandler defaultHandler) {
-		return errorHandler == null ? defaultHandler : errorHandler;
+		return Objects.isNull(errorHandler) ? defaultHandler : errorHandler;
 	}
 
 	/**
@@ -77,7 +78,7 @@ public abstract class AbstractInvocationRequest implements InvocationRequest {
 	 * {@inheritDoc}
 	 */
 	public InvocationOutputHandler getOutputHandler(InvocationOutputHandler defaultHandler) {
-		return outputHandler == null ? defaultHandler : outputHandler;
+		return Objects.isNull(outputHandler) ? defaultHandler : outputHandler;
 	}
 
 	/**
@@ -192,7 +193,7 @@ public abstract class AbstractInvocationRequest implements InvocationRequest {
 	 * {@inheritDoc}
 	 */
 	public InvocationRequest addShellEnvironment(String name, String value) {
-		if (this.shellEnvironments == null) {
+		if (Objects.isNull(this.shellEnvironments)) {
 			this.shellEnvironments = new HashMap<String, String>();
 		}
 		this.shellEnvironments.put(name, value);
@@ -203,7 +204,8 @@ public abstract class AbstractInvocationRequest implements InvocationRequest {
 	 * {@inheritDoc}
 	 */
 	public Map<String, String> getShellEnvironments() {
-		return shellEnvironments == null ? Collections.<String, String>emptyMap() : shellEnvironments;
+		return Objects.isNull(shellEnvironments)
+				? Collections.<String, String>emptyMap() : shellEnvironments;
 	}
 
 }

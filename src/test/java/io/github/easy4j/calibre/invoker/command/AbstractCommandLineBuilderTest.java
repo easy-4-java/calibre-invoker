@@ -122,6 +122,43 @@ public class AbstractCommandLineBuilderTest {
     }
 
     @Test
+    public void shouldApplyWorkingDirectoryToBuiltCommandline() throws Exception {
+        File workingDirectory = java.nio.file.Files.createTempDirectory("calibre-working").toFile();
+        TestCommandLineBuilder builder = new TestCommandLineBuilder();
+        builder.setWorkingDirectory(workingDirectory);
+        DefaultEbookConvertInvocationRequest request = new DefaultEbookConvertInvocationRequest();
+
+        Commandline cli = builder.build(request);
+
+        assertEquals(workingDirectory, cli.getWorkingDirectory());
+    }
+
+    @Test
+    public void shouldRejectMissingWorkingDirectory() {
+        TestCommandLineBuilder builder = new TestCommandLineBuilder();
+        builder.setWorkingDirectory(new File("target/missing-working-directory"));
+
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> builder.build(new DefaultEbookConvertInvocationRequest()));
+
+        assertTrue(exception.getMessage().contains("Working directory"));
+    }
+
+    @Test
+    public void shouldRejectWorkingDirectoryThatIsAFile() throws Exception {
+        File workingDirectory = java.nio.file.Files.createTempFile("calibre-working", ".tmp").toFile();
+        TestCommandLineBuilder builder = new TestCommandLineBuilder();
+        builder.setWorkingDirectory(workingDirectory);
+
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> builder.build(new DefaultEbookConvertInvocationRequest()));
+
+        assertTrue(exception.getMessage().contains("Working directory"));
+    }
+
+    @Test
     public void shouldSetAndGetLocalRepositoryDirectory() {
         TestCommandLineBuilder builder = new TestCommandLineBuilder();
         File repo = new File("/tmp/repo");
@@ -298,6 +335,19 @@ public class AbstractCommandLineBuilderTest {
         builder.setShellEnvironment(request, cli);
 
         // Should not throw
+    }
+
+    @Test
+    public void shouldNotInheritSystemEnvironmentWhenDisabled() throws Exception {
+        TestCommandLineBuilder builder = new TestCommandLineBuilder();
+        DefaultEbookConvertInvocationRequest request = new DefaultEbookConvertInvocationRequest();
+        request.setShellEnvironmentInherited(false);
+        request.addShellEnvironment("CALIBRE_TEST_ONLY", "configured");
+
+        Commandline cli = builder.build(request);
+
+        assertArrayEquals(new String[] { "CALIBRE_TEST_ONLY=configured" },
+                cli.getEnvironmentVariables());
     }
 
     @Test

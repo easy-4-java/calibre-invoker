@@ -24,8 +24,11 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 import org.codehaus.plexus.util.Os;
+import org.codehaus.plexus.util.cli.CommandLineException;
+import org.codehaus.plexus.util.cli.Commandline;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -180,15 +183,121 @@ public class DefaultInvokerTest {
     public void executeDelegatesToInjectedProcessExecutor() throws Exception {
         RecordingProcessExecutor executor = new RecordingProcessExecutor(7);
         DefaultInvoker invoker = new DefaultInvoker(executor);
-        invoker.setCalibreHome(createFakeCalibreHome());
+        invoker.setCalibreHome(createFakeCalibreHome("calibre-home"));
         InvocationResult result = invoker.execute(validWeb2diskRequest());
         assertEquals(7, result.getExitCode());
         assertEquals(web2diskExecutableName(), executor.getExecutableName());
     }
 
-    private File createFakeCalibreHome() throws IOException {
-        File calibreHome = temporaryFolder.newFolder("calibre-home");
-        assertTrue(new File(calibreHome, web2diskExecutableName()).createNewFile());
+    @Test
+    public void requestCalibreHomeOverridesInvokerHome() throws Exception {
+        File invokerHome = createFakeCalibreHome("invoker-home");
+        File requestHome = createFakeCalibreHome("request-home");
+        LifecycleRecordingProcessExecutor executor = new LifecycleRecordingProcessExecutor(0);
+        DefaultInvoker invoker = new DefaultInvoker(executor);
+        DefaultWeb2diskInvocationRequest request = validWeb2diskRequest();
+        invoker.setCalibreHome(invokerHome);
+        request.setCalibreHome(requestHome);
+
+        invoker.execute(request);
+
+        assertEquals(new File(requestHome, web2diskExecutableName()).getCanonicalFile(),
+                executor.executable);
+    }
+
+    @Test
+    public void workingDirectoryIsAppliedToCommandline() throws Exception {
+        File workingDirectory = temporaryFolder.newFolder("working-directory");
+        LifecycleRecordingProcessExecutor executor = new LifecycleRecordingProcessExecutor(0);
+        DefaultInvoker invoker = invokerWithExecutable(executor);
+        invoker.setWorkingDirectory(workingDirectory);
+
+        invoker.execute(validWeb2diskRequest());
+
+        assertEquals(workingDirectory, executor.commandline.getWorkingDirectory());
+    }
+
+    @Test
+    public void requestHandlersOverrideInvokerHandlers() throws Exception {
+        LifecycleRecordingProcessExecutor executor = new LifecycleRecordingProcessExecutor(0);
+        DefaultInvoker invoker = invokerWithExecutable(executor);
+        InvocationOutputHandler invokerOutputHandler = line -> { };
+        InvocationOutputHandler invokerErrorHandler = line -> { };
+        InvocationOutputHandler requestOutputHandler = line -> { };
+        InvocationOutputHandler requestErrorHandler = line -> { };
+        DefaultWeb2diskInvocationRequest request = validWeb2diskRequest();
+        invoker.setOutputHandler(invokerOutputHandler);
+        invoker.setErrorHandler(invokerErrorHandler);
+        request.setOutputHandler(requestOutputHandler);
+        request.setErrorHandler(requestErrorHandler);
+
+        invoker.execute(request);
+
+        assertSame(requestOutputHandler, executor.outputHandler);
+        assertSame(requestErrorHandler, executor.errorHandler);
+    }
+
+    @Test
+    public void invokerHandlersAreUsedWhenRequestHandlersAreAbsent() throws Exception {
+        LifecycleRecordingProcessExecutor executor = new LifecycleRecordingProcessExecutor(0);
+        DefaultInvoker invoker = invokerWithExecutable(executor);
+        InvocationOutputHandler invokerOutputHandler = line -> { };
+        InvocationOutputHandler invokerErrorHandler = line -> { };
+        invoker.setOutputHandler(invokerOutputHandler);
+        invoker.setErrorHandler(invokerErrorHandler);
+
+        invoker.execute(validWeb2diskRequest());
+
+        assertSame(invokerOutputHandler, executor.outputHandler);
+        assertSame(invokerErrorHandler, executor.errorHandler);
+    }
+
+    @Test
+    public void defaultHandlersAreUsedWhenNoHandlersAreConfigured() throws Exception {
+        LifecycleRecordingProcessExecutor executor = new LifecycleRecordingProcessExecutor(0);
+        DefaultInvoker invoker = invokerWithExecutable(executor);
+
+        invoker.execute(validWeb2diskRequest());
+
+        assertTrue(executor.outputHandler instanceof SystemOutHandler);
+        assertTrue(executor.errorHandler instanceof SystemOutHandler);
+    }
+
+    @Test
+    public void nonZeroExitCodeIsPreservedInInvocationResult() throws Exception {
+        LifecycleRecordingProcessExecutor executor = new LifecycleRecordingProcessExecutor(23);
+        DefaultInvoker invoker = invokerWithExecutable(executor);
+
+        InvocationResult result = invoker.execute(validWeb2diskRequest());
+
+        assertEquals(23, result.getExitCode());
+        assertNull(result.getExecutionException());
+    }
+
+    @Test
+    public void processStartExceptionIsRecordedInInvocationResult() throws Exception {
+        CommandLineException startFailure = new CommandLineException("process could not start");
+        LifecycleRecordingProcessExecutor executor =
+                new LifecycleRecordingProcessExecutor(startFailure);
+        DefaultInvoker invoker = invokerWithExecutable(executor);
+
+        InvocationResult result = invoker.execute(validWeb2diskRequest());
+
+        assertSame(startFailure, result.getExecutionException());
+        assertEquals(Integer.MIN_VALUE, result.getExitCode());
+    }
+
+    private DefaultInvoker invokerWithExecutable(ProcessExecutor processExecutor) throws IOException {
+        DefaultInvoker invoker = new DefaultInvoker(processExecutor);
+        invoker.setCalibreHome(createFakeCalibreHome("calibre-home-" + System.nanoTime()));
+        return invoker;
+    }
+
+    private File createFakeCalibreHome(String folderName) throws IOException {
+        File calibreHome = temporaryFolder.newFolder(folderName);
+        File executable = new File(calibreHome, web2diskExecutableName());
+        assertTrue(executable.createNewFile());
+        assertTrue(executable.setExecutable(true) || Os.isFamily("windows"));
         return calibreHome;
     }
 
@@ -200,5 +309,38 @@ public class DefaultInvokerTest {
         DefaultWeb2diskInvocationRequest request = new DefaultWeb2diskInvocationRequest();
         request.setURL("https://example.com");
         return request;
+    }
+
+    private static final class LifecycleRecordingProcessExecutor implements ProcessExecutor {
+
+        private final int exitCode;
+        private final CommandLineException startFailure;
+        private File executable;
+        private Commandline commandline;
+        private InvocationOutputHandler outputHandler;
+        private InvocationOutputHandler errorHandler;
+
+        private LifecycleRecordingProcessExecutor(int exitCode) {
+            this.exitCode = exitCode;
+            this.startFailure = null;
+        }
+
+        private LifecycleRecordingProcessExecutor(CommandLineException startFailure) {
+            this.exitCode = Integer.MIN_VALUE;
+            this.startFailure = startFailure;
+        }
+
+        @Override
+        public int execute(Commandline commandline, InvocationOutputHandler outputHandler,
+                InvocationOutputHandler errorHandler) throws CommandLineException {
+            this.commandline = commandline;
+            this.executable = new File(commandline.getCommandline()[0]);
+            this.outputHandler = outputHandler;
+            this.errorHandler = errorHandler;
+            if (Objects.nonNull(startFailure)) {
+                throw startFailure;
+            }
+            return exitCode;
+        }
     }
 }

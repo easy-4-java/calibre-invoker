@@ -100,9 +100,13 @@ public abstract class AbstractCommandLineBuilder {
 			throw new CommandLineConfigurationException(e.getMessage(), e);
 		}
 		
-		Commandline cli = new Commandline();
+		Commandline cli = request.isShellEnvironmentInherited()
+				? new Commandline() : new NonInheritingCommandline();
 		
 		cli.setExecutable(executable.getAbsolutePath());
+		if (Objects.nonNull(workingDirectory)) {
+			cli.setWorkingDirectory(workingDirectory);
+		}
 
 		// handling for OS-level envars
 		setShellEnvironment(request, cli);
@@ -154,6 +158,12 @@ public abstract class AbstractCommandLineBuilder {
 		if (Objects.isNull(logger)) {
 			throw new IllegalStateException("A logger instance is required.");
 		}
+		if (Objects.nonNull(workingDirectory) && !workingDirectory.exists()) {
+			throw new IOException("Working directory does not exist: " + workingDirectory + ".");
+		}
+		if (Objects.nonNull(workingDirectory) && !workingDirectory.isDirectory()) {
+			throw new IOException("Working directory is not a directory: " + workingDirectory + ".");
+		}
 	}
  
 	/**
@@ -186,8 +196,10 @@ public abstract class AbstractCommandLineBuilder {
 			}
 		}
 
-		if (Objects.nonNull(request.getCalibreHome())) {
-			cli.addEnvironment("CALIBRE_HOME", request.getCalibreHome().getAbsolutePath());
+		File effectiveCalibreHome = Objects.nonNull(request.getCalibreHome())
+				? request.getCalibreHome() : calibreHome;
+		if (Objects.nonNull(effectiveCalibreHome)) {
+			cli.addEnvironment("CALIBRE_HOME", effectiveCalibreHome.getAbsolutePath());
 		}
 
 		for (Map.Entry<String, String> entry : request.getShellEnvironments().entrySet()) {
@@ -320,6 +332,25 @@ public abstract class AbstractCommandLineBuilder {
 
 	public void setWorkingDirectory(File workingDirectory) {
 		this.workingDirectory = workingDirectory;
+	}
+
+	/**
+	 * Plexus command lines add the current process environment when environment variables
+	 * are materialized. This variant returns only explicitly configured variables.
+	 */
+	private static final class NonInheritingCommandline extends Commandline {
+
+		@Override
+		public String[] getEnvironmentVariables() {
+			synchronized (envVars) {
+				String[] environment = new String[envVars.size()];
+				int index = 0;
+				for (Map.Entry<String, String> entry : envVars.entrySet()) {
+					environment[index++] = entry.getKey() + "=" + entry.getValue();
+				}
+				return environment;
+			}
+		}
 	}
  
 

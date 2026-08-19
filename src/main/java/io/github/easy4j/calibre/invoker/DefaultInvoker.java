@@ -122,15 +122,10 @@ public class DefaultInvoker implements Invoker {
 				cliBuilder.setLocalRepositoryDirectory(ebookRepo);
 			}
 
-			File calibreHome = getCalibreHome();
-			if (Objects.nonNull(calibreHome)) {
-				cliBuilder.setCalibreHome(calibreHome);
-			}
-
-			File workingDirectory = getWorkingDirectory();
-			if (Objects.nonNull(workingDirectory)) {
-				cliBuilder.setWorkingDirectory(workingDirectory);
-			}
+			File effectiveCalibreHome = Objects.nonNull(request.getCalibreHome())
+					? request.getCalibreHome() : getCalibreHome();
+			cliBuilder.setCalibreHome(effectiveCalibreHome);
+			cliBuilder.setWorkingDirectory(getWorkingDirectory());
 
 			cli = cliBuilder.build(request);
 		} catch (CommandLineConfigurationException e) {
