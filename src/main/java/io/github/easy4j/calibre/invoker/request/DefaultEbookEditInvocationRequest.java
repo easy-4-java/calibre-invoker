@@ -20,7 +20,7 @@ package io.github.easy4j.calibre.invoker.request;
  * Launch the calibre edit book tool. You can optionally also specify the names 
  * of files inside the book which will be opened for editing automatically.</p>
  * https://manual.calibre-ebook.com/generated/en/ebook-edit.html
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  */
 public class DefaultEbookEditInvocationRequest extends AbstractInvocationRequest implements InvocationRequest  {
 	

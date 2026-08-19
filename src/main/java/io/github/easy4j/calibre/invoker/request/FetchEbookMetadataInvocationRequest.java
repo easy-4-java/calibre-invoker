@@ -21,7 +21,7 @@ import java.io.File;
  * Specifies the parameters used to control a Calibre {@code fetch-ebook-metadata} invocation.
  * Fetches book metadata from online sources using at least one of title, authors, or ISBN.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see InvocationRequest
  * @see io.github.easy4j.calibre.invoker.command.FetchEbookMetadataCommandLineBuilder

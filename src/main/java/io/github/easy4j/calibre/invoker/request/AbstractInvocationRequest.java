@@ -29,7 +29,7 @@ import io.github.easy4j.calibre.invoker.InvocationOutputHandler;
  * for common invocation parameters. Subclasses extend this to add tool-specific parameters
  * for particular Calibre commands.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see InvocationRequest
  * @see DefaultEbookConvertInvocationRequest

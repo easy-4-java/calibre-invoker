@@ -21,7 +21,7 @@ import java.io.File;
  * Specifies the parameters used to control a Calibre {@code lrs2lrf} invocation. Compiles
  * an LRS file into an LRF file with optional output directory configuration.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see InvocationRequest
  * @see io.github.easy4j.calibre.invoker.command.Lrs2lrfCommandLineBuilder

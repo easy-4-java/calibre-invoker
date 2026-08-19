@@ -49,7 +49,7 @@ import io.github.easy4j.calibre.invoker.request.Web2diskInvocationRequest;
  *     }
  * }</pre>
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 3.0.0
  * @see Invoker
  * @see InvocationResult
