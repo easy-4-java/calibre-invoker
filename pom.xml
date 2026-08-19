@@ -337,6 +337,27 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <!-- API 基线：verify 阶段拒绝已发布类型或方法描述符被移除，同时允许新增 API -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>public-api-baseline</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <includes combine.self="override">
+                                <include>**/PublicApiBaselineTest.java</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
