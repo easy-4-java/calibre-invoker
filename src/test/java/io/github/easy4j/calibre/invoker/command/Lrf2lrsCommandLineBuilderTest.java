@@ -22,9 +22,15 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Locale;
 
 import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.Commandline;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -92,6 +98,51 @@ public class Lrf2lrsCommandLineBuilderTest {
         assertArrayEquals(new String[] {
                 "-o", new File(outputDirectory, "archive.book.final.lrs").getCanonicalPath(),
                 input.getAbsolutePath()
+        }, cli.getArguments());
+    }
+
+    @Test
+    public void rejectsDerivedOutputSymlinkThatEscapesOutputDirectory() throws Exception {
+        File input = temporaryFolder.newFile("escape.lrf");
+        File outputDirectory = temporaryFolder.newFolder("escape-output");
+        File externalDirectory = temporaryFolder.newFolder("private-external-output");
+        File externalTarget = new File(externalDirectory, "escape.lrs");
+        assertTrue(externalTarget.createNewFile());
+        Path outputLink = new File(outputDirectory, "escape.lrs").toPath();
+        createSymbolicLinkOrSkip(outputLink, externalTarget.toPath());
+        InterfaceOnlyRequest request = new InterfaceOnlyRequest();
+        request.setLrfFile(input);
+        request.setOutputDirectory(outputDirectory);
+
+        CommandLineConfigurationException exception = assertThrows(
+                CommandLineConfigurationException.class,
+                () -> new Lrf2lrsCommandLineBuilder().doCommandInternal(
+                        request, new Commandline()));
+
+        assertTrue(exception.getMessage().contains("outputDirectory"));
+        assertFalse(exception.getMessage().contains(externalTarget.getAbsolutePath()));
+    }
+
+    @Test
+    public void acceptsDerivedOutputSymlinkWhoseCanonicalTargetRemainsInsideDirectory()
+            throws Exception {
+        File input = temporaryFolder.newFile("internal-link.lrf");
+        File outputDirectory = temporaryFolder.newFolder("internal-link-output");
+        File nestedDirectory = new File(outputDirectory, "nested");
+        assertTrue(nestedDirectory.mkdir());
+        File internalTarget = new File(nestedDirectory, "actual.lrs");
+        assertTrue(internalTarget.createNewFile());
+        Path outputLink = new File(outputDirectory, "internal-link.lrs").toPath();
+        createSymbolicLinkOrSkip(outputLink, internalTarget.toPath());
+        InterfaceOnlyRequest request = new InterfaceOnlyRequest();
+        request.setLrfFile(input);
+        request.setOutputDirectory(outputDirectory);
+
+        Commandline cli = new Commandline();
+        new Lrf2lrsCommandLineBuilder().doCommandInternal(request, cli);
+
+        assertArrayEquals(new String[] {
+                "-o", internalTarget.getCanonicalPath(), input.getAbsolutePath()
         }, cli.getArguments());
     }
 
@@ -216,6 +267,30 @@ public class Lrf2lrsCommandLineBuilderTest {
                 () -> new Lrf2lrsCommandLineBuilder().doCommandInternal(request, new Commandline()));
         assertTrue(exception.getMessage().contains("outputDirectory"));
         assertTrue(exception.getMessage().contains("directory"));
+    }
+
+    private void createSymbolicLinkOrSkip(Path link, Path target) throws Exception {
+        try {
+            Files.createSymbolicLink(link, target);
+        } catch (UnsupportedOperationException exception) {
+            Assume.assumeNoException("Symbolic links are unsupported by this JVM/filesystem.",
+                    exception);
+        } catch (FileSystemException exception) {
+            if (Os.isFamily("windows") && isWindowsSymlinkPrivilegeFailure(exception)) {
+                Assume.assumeNoException("Windows symbolic-link privilege is unavailable.",
+                        exception);
+            }
+            throw exception;
+        }
+    }
+
+    private boolean isWindowsSymlinkPrivilegeFailure(FileSystemException exception) {
+        String details = String.valueOf(exception.getReason()) + " " + exception.getMessage();
+        String normalized = details.toLowerCase(Locale.ENGLISH);
+        return exception instanceof AccessDeniedException
+                || normalized.contains("privilege")
+                || normalized.contains("access is denied")
+                || normalized.contains("not permitted");
     }
 
     private File createExecutable(File calibreHome, String commandName) throws Exception {

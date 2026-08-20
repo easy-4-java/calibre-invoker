@@ -128,7 +128,13 @@ public class Lrs2lrfCommandLineBuilder extends AbstractCommandLineBuilder {
 		int extensionIndex = inputName.lastIndexOf('.');
 		String baseName = extensionIndex > 0 ? inputName.substring(0, extensionIndex) : inputName;
 		try {
-			return new File(outputDirectory, baseName + targetExtension).getCanonicalFile();
+			File canonicalOutputFile =
+					new File(outputDirectory, baseName + targetExtension).getCanonicalFile();
+			if (!canonicalOutputFile.toPath().startsWith(outputDirectory.toPath())) {
+				throw new CommandLineConfigurationException(
+						"Lrs2lrf output target must remain within outputDirectory.");
+			}
+			return canonicalOutputFile;
 		} catch (IOException ignored) {
 			throw new CommandLineConfigurationException(
 					"Cannot canonicalize Lrs2lrf output file.");
