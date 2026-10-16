@@ -334,7 +334,7 @@
                     <version>${maven-surefire-plugin.version}</version>
                     <configuration>
                         <skip>false</skip>
-                        <skipTests>true</skipTests>
+                        <skipTests>false</skipTests>
                         <forkMode>once</forkMode>
                         <argLine>-Xmx1024m
 							-Dfile.encoding=UTF-8</argLine>
