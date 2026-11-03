@@ -36,7 +36,8 @@ jobs:
 
       - name: Verify standalone Surefire and skipped-test paths
         run: |
-          bash ./mvnw -B --no-transfer-progress clean test -DskipTests
+          bash ./mvnw -B --no-transfer-progress clean test -Dmaven.test.skip=true
+          bash ./mvnw -B --no-transfer-progress test-compile
           bash ./mvnw -B --no-transfer-progress surefire:test
 
       - name: Build and verify with JaCoCo coverage gate
