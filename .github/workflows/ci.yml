@@ -34,6 +34,11 @@ jobs:
           java-version: '8'
           cache: maven
 
+      - name: Verify standalone Surefire and skipped-test paths
+        run: |
+          mvn -B --no-transfer-progress clean test -DskipTests
+          mvn -B --no-transfer-progress surefire:test
+
       - name: Build and verify with JaCoCo coverage gate
         run: mvn -B --no-transfer-progress clean verify
 
