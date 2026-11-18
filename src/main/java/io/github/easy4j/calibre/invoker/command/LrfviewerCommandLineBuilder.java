@@ -71,9 +71,9 @@ public class LrfviewerCommandLineBuilder extends AbstractCommandLineBuilder {
 			if (calibreExecutable != null) {
 				executable = calibreExecutable.getPath();
 			} else if (Os.isFamily("windows")) {
-				executable = "lrs2lrf.exe";
+				executable = "lrfviewer.exe";
 			} else {
-				executable = "lrs2lrf";
+				executable = "lrfviewer";
 			}
 
 			calibreExecutable = new File(calibreHome, executable);
