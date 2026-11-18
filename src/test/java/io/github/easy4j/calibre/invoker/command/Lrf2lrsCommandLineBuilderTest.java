@@ -111,4 +111,20 @@ public class Lrf2lrsCommandLineBuilderTest {
 
         // Should not throw, just no-op
     }
+
+    @Test
+    public void shouldBuildLrfConversionArgumentsFromItsOwnRequest() throws CommandLineConfigurationException {
+        Lrf2lrsCommandLineBuilder builder = new Lrf2lrsCommandLineBuilder();
+        DefaultLrf2lrsInvocationRequest request = new DefaultLrf2lrsInvocationRequest();
+        request.setLrfFile(new File("book.lrf"));
+        request.setDontOutputResources(true);
+        request.setOutputDirectory(new File("output"));
+
+        Commandline cli = new Commandline();
+        builder.doCommandInternal(request, cli);
+
+        assertArrayEquals(new String[]{"--dont-output-resources", "-o",
+                new File("output").getAbsolutePath(), new File("book.lrf").getAbsolutePath()},
+                cli.getArguments());
+    }
 }

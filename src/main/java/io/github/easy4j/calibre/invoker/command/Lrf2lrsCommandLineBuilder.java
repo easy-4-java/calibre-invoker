@@ -22,9 +22,8 @@ import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.Commandline;
 
 import io.github.easy4j.calibre.invoker.exception.CommandLineConfigurationException;
-import io.github.easy4j.calibre.invoker.request.DefaultLrf2lrsInvocationRequest;
 import io.github.easy4j.calibre.invoker.request.InvocationRequest;
-import io.github.easy4j.calibre.invoker.request.Lrs2lrfInvocationRequest;
+import io.github.easy4j.calibre.invoker.request.Lrf2lrsInvocationRequest;
 
 /**
  * Command-line builder for the Calibre {@code lrf2lrs} tool. Constructs a command line to
@@ -42,9 +41,9 @@ public class Lrf2lrsCommandLineBuilder extends AbstractCommandLineBuilder {
 	protected void doCommandInternal(InvocationRequest request, Commandline cli)
 			throws CommandLineConfigurationException {
 		
-		if(request instanceof Lrs2lrfInvocationRequest) {
+		if(request instanceof Lrf2lrsInvocationRequest) {
 
-			DefaultLrf2lrsInvocationRequest lrf2lrsRequest = ( DefaultLrf2lrsInvocationRequest) request;
+			Lrf2lrsInvocationRequest lrf2lrsRequest = (Lrf2lrsInvocationRequest) request;
 			
 			setDontOutputResources(lrf2lrsRequest, cli);
 			setOutputDirectory(lrf2lrsRequest, cli);
@@ -91,13 +90,13 @@ public class Lrf2lrsCommandLineBuilder extends AbstractCommandLineBuilder {
 		return calibreExecutable;
 	}
 	
-	protected void setDontOutputResources(DefaultLrf2lrsInvocationRequest request, Commandline cli) {
+	protected void setDontOutputResources(Lrf2lrsInvocationRequest request, Commandline cli) {
 		if(request.isDontOutputResources()) {
 			cli.createArg().setValue("--dont-output-resources");
 		}
 	}
 
-	protected void setOutputDirectory(DefaultLrf2lrsInvocationRequest request, Commandline cli) {
+	protected void setOutputDirectory(Lrf2lrsInvocationRequest request, Commandline cli) {
 		
 		File outputDirectory = request.getOutputDirectory();
 		if (outputDirectory != null) {

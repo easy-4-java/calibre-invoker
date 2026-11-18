@@ -18,13 +18,26 @@ package io.github.easy4j.calibre.invoker;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
+import org.codehaus.plexus.util.Os;
+import org.junit.Assume;
 import org.junit.Test;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
+
+import io.github.easy4j.calibre.invoker.exception.CalibreInvocationException;
+import io.github.easy4j.calibre.invoker.exception.CommandLineConfigurationException;
+import io.github.easy4j.calibre.invoker.request.DefaultWeb2diskInvocationRequest;
 
 /**
  * Tests for {@link DefaultInvoker}.
  */
 public class DefaultInvokerTest {
+
+    @Rule
+    public TemporaryFolder calibreHome = new TemporaryFolder();
 
     @Test
     public void shouldCreateWithDefaultValues() {
@@ -132,5 +145,41 @@ public class DefaultInvokerTest {
         // InvocationRequest is an interface, not a Web2diskInvocationRequest
         // so getCommandLineBuilder should return null
         assertNull(invoker.getCommandLineBuilder(new io.github.easy4j.calibre.invoker.request.DefaultEbookConvertInvocationRequest()));
+    }
+
+    @Test
+    public void shouldReportMissingExecutableAsInvocationError() {
+        DefaultInvoker invoker = new DefaultInvoker();
+        invoker.setCalibreHome(calibreHome.getRoot());
+        DefaultWeb2diskInvocationRequest request = new DefaultWeb2diskInvocationRequest();
+        request.setURL("https://example.test");
+
+        try {
+            invoker.execute(request);
+            fail("Expected a missing Calibre executable to be reported");
+        } catch (CalibreInvocationException error) {
+            assertTrue(error.getCause() instanceof CommandLineConfigurationException);
+            assertTrue(error.getMessage().contains("Calibre executable not found"));
+        }
+    }
+
+    @Test
+    public void shouldReturnTheExitCodeOfAStartedCalibreProcess() throws Exception {
+        Assume.assumeFalse(Os.isFamily("windows"));
+        File executable = calibreHome.newFile("web2disk");
+        Files.write(executable.toPath(), "#!/bin/sh\nexit 7\n".getBytes(StandardCharsets.UTF_8));
+        assertTrue(executable.setExecutable(true));
+
+        DefaultInvoker invoker = new DefaultInvoker();
+        invoker.setCalibreHome(calibreHome.getRoot());
+        invoker.setWorkingDirectory(calibreHome.getRoot());
+        invoker.setEbookRepositoryDirectory(calibreHome.getRoot());
+        DefaultWeb2diskInvocationRequest request = new DefaultWeb2diskInvocationRequest();
+        request.setURL("https://example.test");
+
+        InvocationResult result = invoker.execute(request);
+
+        assertEquals(7, result.getExitCode());
+        assertNull(result.getExecutionException());
     }
 }
